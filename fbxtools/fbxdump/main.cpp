@@ -197,15 +197,31 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     auto normals = layer->GetNormals();
     if (normals != NULL)
     {
-        fs.write<char>('N');
+        fs.write<char>('n');
         encode<FbxVector4>(normals, fs);
+    }
+    
+    // encode tangents
+    auto tangents = layer->GetTangents();
+    if (tangents != NULL)
+    {
+        fs.write<char>('t');
+        encode<FbxVector4>(tangents, fs);
+    }
+    
+    // encode vertex colors
+    auto colors = layer->GetVertexColors();
+    if (colors != NULL)
+    {
+        fs.write<char>('c');
+        encode<FbxColor>(colors, fs);
     }
     
     // encode uvmapping
     auto uvs = layer->GetUVs();
     if (uvs != NULL)
     {
-        fs.write<char>('U');
+        fs.write<char>('u');
         encode<FbxVector2>(uvs, fs);
     }
 }
