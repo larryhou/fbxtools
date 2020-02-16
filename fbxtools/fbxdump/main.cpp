@@ -12,8 +12,32 @@
 #include <fbxsdk/core/fbxdatatypes.h>
 #include <string>
 
-void dumpHierarchy(FbxNode* node, std::string indent = "")
+struct MeshStatistics
 {
+    int vertices;
+    int polygons;
+    int triangles;
+    
+    MeshStatistics(int v, int p, int t): vertices(v), polygons(p), triangles(t) {}
+    MeshStatistics(): MeshStatistics(0, 0, 0) {}
+    
+    MeshStatistics operator+(MeshStatistics v)
+    {
+        return MeshStatistics(vertices + v.vertices, polygons + v.polygons, triangles + v.triangles);
+    }
+    
+    MeshStatistics& operator+=(MeshStatistics v)
+    {
+        vertices += v.vertices;
+        polygons += v.polygons;
+        triangles += v.triangles;
+        return *this;
+    }
+};
+
+MeshStatistics dumpHierarchy(FbxNode* node, std::string indent = "")
+{
+    MeshStatistics stat;
     auto numChildren = node->GetChildCount();
     for (auto i = 0; i < numChildren; i++)
     {
@@ -23,6 +47,7 @@ void dumpHierarchy(FbxNode* node, std::string indent = "")
         auto type = attribute->GetAttributeType();
         std::string name = "Unknown";
         auto isNull = false;
+        auto isMesh = false;
         switch (type)
         {
             case fbxsdk::FbxNodeAttribute::eNull:
@@ -31,7 +56,10 @@ void dumpHierarchy(FbxNode* node, std::string indent = "")
                 break;
             case fbxsdk::FbxNodeAttribute::eMarker:name = "Marker";break;
             case fbxsdk::FbxNodeAttribute::eSkeleton:name = "Skeleton";break;
-            case fbxsdk::FbxNodeAttribute::eMesh:name = "Mesh";break;
+            case fbxsdk::FbxNodeAttribute::eMesh:
+                name = "Mesh";
+                isMesh = true;
+                break;
             case fbxsdk::FbxNodeAttribute::eNurbs:name = "Nurbs";break;
             case fbxsdk::FbxNodeAttribute::ePatch:name = "Patch";break;
             case fbxsdk::FbxNodeAttribute::eCamera:name = "Camera";break;
@@ -52,9 +80,27 @@ void dumpHierarchy(FbxNode* node, std::string indent = "")
             default:break;
         }
         
-        printf("%s%s─\e[4m%s\e[0m \e[%dm%s\e[0m\n", indent.c_str(), closed ? "└" : "├", name.c_str(), isNull ? 96:33,  child->GetName());
-        dumpHierarchy(child, indent + (closed ? " " : "│") + "  ");
+        printf("%s%s─\e[4m%s\e[0m \e[%dm%s\e[0m", indent.c_str(), closed ? "└" : "├", name.c_str(), isNull ? 96:33,  child->GetName());
+        if (isMesh)
+        {
+            auto mesh = static_cast<FbxMesh *>(attribute);
+            auto polygonCount = mesh->GetPolygonCount();
+            auto triangleCount = 0;
+            for (auto p = 0; p < polygonCount; p++)
+            {
+                auto size = mesh->GetPolygonSize(p);
+                triangleCount += size - 2;
+            }
+            stat.vertices += mesh->GetPolygonVertexCount();
+            stat.polygons += polygonCount;
+            stat.triangles += triangleCount;
+            printf(" vertices=%d polygons=%d triangles=%d", mesh->GetPolygonVertexCount(), polygonCount, triangleCount);
+        }
+        printf("\n");
+        stat += dumpHierarchy(child, indent + (closed ? " " : "│") + "  ");
     }
+    
+    return stat;
 }
 
 bool process(const char *filepath, FbxManager *pManager)
@@ -117,7 +163,8 @@ bool process(const char *filepath, FbxManager *pManager)
         //        }
     }
     
-    dumpHierarchy(pScene->GetRootNode());
+    auto stat = dumpHierarchy(pScene->GetRootNode());
+    printf("[Mesh] vertices=%d polygons=%d triangles=%d\n", stat.vertices, stat.polygons, stat.triangles);
     
     pScene->Destroy();
     
