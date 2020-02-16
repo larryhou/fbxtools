@@ -20,8 +20,8 @@ void process(std::string filename, FbxManager *pManager)
         return;
     }
     
-    auto pScene = FbxScene::Create(pManager, "Scene");
-    if (!importer->Import(pScene))
+    auto fScene = FbxScene::Create(pManager, "Scene");
+    if (!importer->Import(fScene))
     {
         return;
     }
@@ -30,7 +30,7 @@ void process(std::string filename, FbxManager *pManager)
     
     auto tScene = FbxScene::Create(pManager, "Scene");
     std::vector<FbxNode *> children;
-    auto root = pScene->GetRootNode();
+    auto root = fScene->GetRootNode();
     for (auto i = 0; i < root->GetChildCount(); i++)
     {
         auto child = root->GetChild(i);
@@ -40,16 +40,16 @@ void process(std::string filename, FbxManager *pManager)
     {
         tScene->GetRootNode()->AddChild(*iter);
     }
-    
-    for (auto i = 0; i < pScene->GetSrcObjectCount(); i++)
+
+    for (auto i = 0; i < fScene->GetSrcObjectCount(); i++)
     {
-        auto obj = pScene->GetSrcObject(i);
+        auto obj = fScene->GetSrcObject(i);
         if (obj != root && !obj->Is<FbxGlobalSettings>())
         {
             obj->ConnectDstObject(tScene);
         }
     }
-    pScene->DisconnectAllSrcObject();
+    fScene->DisconnectAllSrcObject();
     
     auto pos = filename.rfind('.');
     std::string savename = filename.substr(0, pos) + "_t" + filename.substr(pos);
@@ -66,10 +66,10 @@ void process(std::string filename, FbxManager *pManager)
         return;
     }
     
-    printf(">> %s\n", savename.c_str());
+    printf(">>> %s\n", savename.c_str());
     
     tScene->Destroy();
-    pScene->Destroy();
+    fScene->Destroy();
 }
 
 int main(int argc, const char * argv[])

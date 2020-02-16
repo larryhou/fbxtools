@@ -356,6 +356,7 @@
 		6B28FEEF23F98AB500E6CBE9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEPLOYMENT_LOCATION = YES;
 				DEVELOPMENT_TEAM = PRLP6W5S32;
@@ -372,6 +373,7 @@
 		6B28FEF023F98AB500E6CBE9 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_WARN_DOCUMENTATION_COMMENTS = NO;
 				CODE_SIGN_STYLE = Automatic;
 				DEPLOYMENT_LOCATION = YES;
 				DEVELOPMENT_TEAM = PRLP6W5S32;
