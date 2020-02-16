@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "6B28FED323F7DD3D00E6CBE9"
-               BuildableName = "fbxdump"
-               BlueprintName = "fbxdump"
+               BlueprintIdentifier = "6B28FEE923F98AB500E6CBE9"
+               BuildableName = "fbxtrim"
+               BlueprintName = "fbxtrim"
                ReferencedContainer = "container:fbxtools.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,19 +44,15 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "6B28FED323F7DD3D00E6CBE9"
-            BuildableName = "fbxdump"
-            BlueprintName = "fbxdump"
+            BlueprintIdentifier = "6B28FEE923F98AB500E6CBE9"
+            BuildableName = "fbxtrim"
+            BlueprintName = "fbxtrim"
             ReferencedContainer = "container:fbxtools.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/larryhou/Downloads/sample.fbx?debug&amp;mesh"
-            isEnabled = "NO">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "/Volumes/Corestone/Documents/Workspace/TheNextMOBA_TRK/Assets/ArtResource/CaptainPBR/Captain_207/Captain_2071_rig.FBX?debug&amp;mesh"
+            argument = "/Users/larryhou/Downloads/sample.fbx"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
@@ -71,9 +67,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "6B28FED323F7DD3D00E6CBE9"
-            BuildableName = "fbxdump"
-            BlueprintName = "fbxdump"
+            BlueprintIdentifier = "6B28FEE923F98AB500E6CBE9"
+            BuildableName = "fbxtrim"
+            BlueprintName = "fbxtrim"
             ReferencedContainer = "container:fbxtools.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

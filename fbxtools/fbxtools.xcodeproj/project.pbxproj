@@ -10,10 +10,22 @@
 		6B28FED823F7DD3D00E6CBE9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6B28FED723F7DD3D00E6CBE9 /* main.cpp */; };
 		6B28FEE023F7DE0700E6CBE9 /* libfbxsdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */; };
 		6B28FEE223F7DE8700E6CBE9 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEE123F7DE8700E6CBE9 /* CoreFoundation.framework */; };
+		6B28FEED23F98AB500E6CBE9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6B28FEEC23F98AB500E6CBE9 /* main.cpp */; };
+		6B28FEF123F98AE100E6CBE9 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEE123F7DE8700E6CBE9 /* CoreFoundation.framework */; };
+		6B28FEF223F98B0900E6CBE9 /* libfbxsdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		6B28FED223F7DD3D00E6CBE9 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		6B28FEE823F98AB500E6CBE9 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = /usr/share/man/man1/;
@@ -30,6 +42,8 @@
 		6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libfbxsdk.a; sourceTree = "<group>"; };
 		6B28FEE123F7DE8700E6CBE9 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		6B28FEE423F95B9700E6CBE9 /* serialize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serialize.h; sourceTree = "<group>"; };
+		6B28FEEA23F98AB500E6CBE9 /* fbxtrim */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fbxtrim; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B28FEEC23F98AB500E6CBE9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -42,6 +56,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6B28FEE723F98AB500E6CBE9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B28FEF123F98AE100E6CBE9 /* CoreFoundation.framework in Frameworks */,
+				6B28FEF223F98B0900E6CBE9 /* libfbxsdk.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -49,6 +72,7 @@
 			isa = PBXGroup;
 			children = (
 				6B28FED623F7DD3D00E6CBE9 /* fbxdump */,
+				6B28FEEB23F98AB500E6CBE9 /* fbxtrim */,
 				6B28FED523F7DD3D00E6CBE9 /* Products */,
 				6B28FEDE23F7DDD800E6CBE9 /* Frameworks */,
 			);
@@ -58,6 +82,7 @@
 			isa = PBXGroup;
 			children = (
 				6B28FED423F7DD3D00E6CBE9 /* fbxdump */,
+				6B28FEEA23F98AB500E6CBE9 /* fbxtrim */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -80,6 +105,14 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		6B28FEEB23F98AB500E6CBE9 /* fbxtrim */ = {
+			isa = PBXGroup;
+			children = (
+				6B28FEEC23F98AB500E6CBE9 /* main.cpp */,
+			);
+			path = fbxtrim;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -100,6 +133,23 @@
 			productReference = 6B28FED423F7DD3D00E6CBE9 /* fbxdump */;
 			productType = "com.apple.product-type.tool";
 		};
+		6B28FEE923F98AB500E6CBE9 /* fbxtrim */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6B28FEEE23F98AB500E6CBE9 /* Build configuration list for PBXNativeTarget "fbxtrim" */;
+			buildPhases = (
+				6B28FEE623F98AB500E6CBE9 /* Sources */,
+				6B28FEE723F98AB500E6CBE9 /* Frameworks */,
+				6B28FEE823F98AB500E6CBE9 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = fbxtrim;
+			productName = fbxtrim;
+			productReference = 6B28FEEA23F98AB500E6CBE9 /* fbxtrim */;
+			productType = "com.apple.product-type.tool";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -110,6 +160,9 @@
 				ORGANIZATIONNAME = LARRYHOU;
 				TargetAttributes = {
 					6B28FED323F7DD3D00E6CBE9 = {
+						CreatedOnToolsVersion = 11.3;
+					};
+					6B28FEE923F98AB500E6CBE9 = {
 						CreatedOnToolsVersion = 11.3;
 					};
 				};
@@ -128,6 +181,7 @@
 			projectRoot = "";
 			targets = (
 				6B28FED323F7DD3D00E6CBE9 /* fbxdump */,
+				6B28FEE923F98AB500E6CBE9 /* fbxtrim */,
 			);
 		};
 /* End PBXProject section */
@@ -138,6 +192,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				6B28FED823F7DD3D00E6CBE9 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6B28FEE623F98AB500E6CBE9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B28FEED23F98AB500E6CBE9 /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -291,6 +353,38 @@
 			};
 			name = Release;
 		};
+		6B28FEEF23F98AB500E6CBE9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEPLOYMENT_LOCATION = YES;
+				DEVELOPMENT_TEAM = PRLP6W5S32;
+				DSTROOT = /;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6B28FEF023F98AB500E6CBE9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEPLOYMENT_LOCATION = YES;
+				DEVELOPMENT_TEAM = PRLP6W5S32;
+				DSTROOT = /;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -308,6 +402,15 @@
 			buildConfigurations = (
 				6B28FEDC23F7DD3D00E6CBE9 /* Debug */,
 				6B28FEDD23F7DD3D00E6CBE9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6B28FEEE23F98AB500E6CBE9 /* Build configuration list for PBXNativeTarget "fbxtrim" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B28FEEF23F98AB500E6CBE9 /* Debug */,
+				6B28FEF023F98AB500E6CBE9 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
