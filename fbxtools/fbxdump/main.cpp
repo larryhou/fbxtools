@@ -164,12 +164,11 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     // vertices
     fs.write('V');
     auto numVertices = mesh->GetControlPointsCount();
-    
     fs.write<int>(numVertices);
     fs.write<FbxVector4>(mesh->GetControlPoints(), numVertices);
     
     // triangles
-    fs.write('P');
+    fs.write('T');
     auto offset = fs.tell();
     fs.write<int>(0); // triangle count
     auto numTriangles = 0;
