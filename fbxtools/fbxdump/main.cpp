@@ -10,20 +10,27 @@
 #include <fbxsdk.h>
 #include <fbxsdk/fileio/fbxiosettings.h>
 #include <fbxsdk/core/fbxdatatypes.h>
+#include <fbxsdk/scene/geometry/fbxlayer.h>
 #include <string>
+#include <sstream>
+#include <fstream>
+#include <map>
+
+#include "serialize.h"
 
 struct MeshStatistics
 {
     int vertices;
     int polygons;
     int triangles;
+    int wastes;
     
-    MeshStatistics(int v, int p, int t): vertices(v), polygons(p), triangles(t) {}
-    MeshStatistics(): MeshStatistics(0, 0, 0) {}
+    MeshStatistics(int v, int p, int t, int w): vertices(v), polygons(p), triangles(t), wastes(w) {}
+    MeshStatistics(): MeshStatistics(0, 0, 0, 0) {}
     
     MeshStatistics operator+(MeshStatistics v)
     {
-        return MeshStatistics(vertices + v.vertices, polygons + v.polygons, triangles + v.triangles);
+        return MeshStatistics(vertices + v.vertices, polygons + v.polygons, triangles + v.triangles, wastes + v.wastes);
     }
     
     MeshStatistics& operator+=(MeshStatistics v)
@@ -31,11 +38,179 @@ struct MeshStatistics
         vertices += v.vertices;
         polygons += v.polygons;
         triangles += v.triangles;
+        wastes += v.wastes;
         return *this;
     }
 };
 
-MeshStatistics dumpHierarchy(FbxNode* node, std::string indent = "")
+enum TerminalFilter
+{
+    none = 0, error, info, check, debug
+};
+
+struct FileOptions
+{
+    std::string filename;
+    std::map<std::string, std::string> data;
+    TerminalFilter filter = debug;
+    bool mesh;
+    bool texture;
+    bool check;
+    
+    FileOptions(std::string file)
+    {
+        filename = file;
+        auto iter = file.begin();
+        while (iter != file.end())
+        {
+            if (*iter == '?')
+            {
+                filename = std::string(file.begin(), iter);
+                
+                filter = ::info;
+                std::string parameters(iter + 1, file.end());
+                
+                std::string option;
+                std::stringstream stream(parameters);
+                while (getline(stream, option, '&'))
+                {
+                    auto pos = option.find('=');
+                    if (pos == std::string::npos)
+                    {
+                        data.insert(std::make_pair(option, std::string()));
+                    }
+                    else
+                    {
+                        auto label = option.substr(0, pos);
+                        auto value = option.substr(pos + 1);
+                        data.insert(std::make_pair(label, value));
+                    }
+                }
+                break;
+            }
+            ++iter;
+        }
+        
+        mesh = get("mesh");
+        texture = get("texture");
+        if (get("debug")) { filter = ::debug; }
+        if (get("error")) { filter = ::error; }
+        check = get("check");
+        if (check) { filter = ::check; }
+    }
+    
+    bool get(std::string key)
+    {
+        auto iter = data.find(key);
+        if (iter == data.end()) { return false; }
+        auto &v = iter->second;
+        if (v.empty()) { return true; }
+        return atoi(v.c_str()) != 0;
+    }
+    
+    bool get(std::string key, std::string &value)
+    {
+        auto iter = data.find(key);
+        if (iter == data.end()) { return false; }
+        value = iter->second;
+        return true;
+    }
+    
+    void print(TerminalFilter filter, std::function<void()> closure)
+    {
+        if (filter == this->filter) { closure(); }
+    }
+};
+
+
+
+template<typename T>
+void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
+{
+    FbxLayerElementArrayTemplate<T> &data = element->GetDirectArray();
+    fs.write<char>('d');
+    for (auto i = 0; i < data.GetCount(); i++)
+    {
+        fs.write<T>(data.GetAt(i));
+    }
+    
+    auto flag = element->GetReferenceMode() == fbxsdk::FbxLayerElement::eIndexToDirect;
+    fs.write<bool>(flag); // index mapping
+    if (flag)
+    {
+        FbxLayerElementArrayTemplate<int> &indice = element->GetIndexArray();
+        fs.write('i');
+        for (auto i = 0; i < indice.GetCount(); i++)
+        {
+            fs.write<int>(indice.GetAt(i));
+        }
+    }
+}
+
+#include <sys/stat.h>
+
+void exportMesh(FbxMesh *mesh, FileOptions &fo)
+{
+    auto pos = fo.filename.rfind('.');
+    std::string workspace = fo.filename.substr(0, pos) + ".fbm";
+    mkdir(workspace.c_str(), 0777);
+    
+    std::string filename = workspace + "/" + mesh->GetName() + ".mesh";
+    MeshFile fs(filename.c_str());
+    fs.write('M');
+    fs.write('E');
+    fs.write('S');
+    fs.write('H');
+    // vertices
+    fs.write('V');
+    auto numVertices = mesh->GetPolygonVertexCount();
+    fs.write<int>(numVertices);
+    fs.write<FbxVector4>(mesh->GetControlPoints(), numVertices);
+    
+    // triangles
+    fs.write('P');
+    auto offset = fs.tell();
+    fs.write<int>(0); // triangle count
+    auto numTriangles = 0;
+    for (auto i = 0; i < mesh->GetPolygonCount(); i++)
+    {
+        auto sides = mesh->GetPolygonSize(i);
+        for (auto t = 0; t < sides - 2; t++) // auto split polygons with more than 3 vertices
+        {
+            ++numTriangles;
+            for (auto n = 0; n < 3; n++) // write single triangle
+            {
+                auto index = mesh->GetPolygonVertex(i, t + n);
+                fs.write<int>(index);
+            }
+        }
+    }
+    
+    // write real triangle count
+    auto position = fs.tell();
+    fs.seek(offset, std::fstream::beg);
+    fs.write<int>(numTriangles);
+    fs.seek(position, std::fstream::beg); // restore cursor
+    
+    // encode normals
+    auto layer = mesh->GetLayer(0);
+    auto normals = layer->GetNormals();
+    if (normals != NULL)
+    {
+        fs.write<char>('N');
+        encode<FbxVector4>(normals, fs);
+    }
+    
+    // encode uvmapping
+    auto uvs = layer->GetUVs();
+    if (uvs != NULL)
+    {
+        fs.write<char>('U');
+        encode<FbxVector2>(uvs, fs);
+    }
+}
+
+MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string indent = "")
 {
     MeshStatistics stat;
     auto numChildren = node->GetChildCount();
@@ -79,37 +254,49 @@ MeshStatistics dumpHierarchy(FbxNode* node, std::string indent = "")
             case fbxsdk::FbxNodeAttribute::eLine:name = "Line";break;
             default:break;
         }
-        
-        printf("%s%s─\e[4m%s\e[0m \e[%dm%s\e[0m", indent.c_str(), closed ? "└" : "├", name.c_str(), isNull ? 96:33,  child->GetName());
+        fo.print(debug, [&]{
+            printf("%s%s─\e[4m%s\e[0m \e[%dm%s\e[0m", indent.c_str(), closed ? "└" : "├", name.c_str(), isNull ? 96:33,  child->GetName());
+        });
+
         if (isMesh)
         {
             auto mesh = static_cast<FbxMesh *>(attribute);
             auto polygonCount = mesh->GetPolygonCount();
             auto triangleCount = 0;
+            auto usedVertexCount = 0;
             for (auto p = 0; p < polygonCount; p++)
             {
                 auto size = mesh->GetPolygonSize(p);
                 triangleCount += size - 2;
+                usedVertexCount += size;
             }
+            auto wastes = mesh->GetPolygonVertexCount() - usedVertexCount;
             stat.vertices += mesh->GetPolygonVertexCount();
             stat.polygons += polygonCount;
             stat.triangles += triangleCount;
-            printf(" vertices=%d polygons=%d triangles=%d", mesh->GetPolygonVertexCount(), polygonCount, triangleCount);
+            stat.wastes += wastes;
+            fo.print(debug, [&]{
+                printf(" vertices=%d polygons=%d triangles=%d", mesh->GetPolygonVertexCount(), polygonCount, triangleCount);
+            });
+            
+            if (fo.mesh) { exportMesh(mesh, fo); }
         }
-        printf("\n");
-        stat += dumpHierarchy(child, indent + (closed ? " " : "│") + "  ");
+        fo.print(debug, [&]{printf("\n");});
+        stat += dumpNodeHierarchy(child, fo, indent + (closed ? " " : "│") + "  ");
     }
     
     return stat;
 }
 
-bool process(const char *filepath, FbxManager *pManager)
+bool process(FileOptions &fo, FbxManager *pManager, MeshStatistics &statistics)
 {
     auto importer = FbxImporter::Create(pManager, "");
-    if (!importer->Initialize(filepath, -1, pManager->GetIOSettings()))
+    if (!importer->Initialize(fo.filename.c_str(), -1, pManager->GetIOSettings()))
     {
-        printf("Call to FbxImporter::Intialize() failed.\n");
-        printf("Error returned: %s \n", importer->GetStatus().GetErrorString());
+        fo.print(error, [&]{
+            printf("Call to FbxImporter::Intialize() failed.\n");
+            printf("Error returned: %s \n", importer->GetStatus().GetErrorString());
+        });
         return false;
     }
     
@@ -117,7 +304,9 @@ bool process(const char *filepath, FbxManager *pManager)
     
     if (!importer->Import(pScene))
     {
-        printf("%s\n", importer->GetStatus().GetErrorString());
+        fo.print(error, [&]{
+            printf("%s\n", importer->GetStatus().GetErrorString());
+        });
         return false;
     }
     
@@ -127,44 +316,21 @@ bool process(const char *filepath, FbxManager *pManager)
     for (auto i = 0; i < numStacks; i++)
     {
         auto pAnimStack = pScene->GetSrcObject<FbxAnimStack>(i);
-        printf("[Animation][%d/%d] %s\n", i + 1, numStacks, pAnimStack->GetName());
-        //        auto numLayers = pAnimStack->GetSrcObjectCount<FbxAnimLayer>();
-        //        for (auto l = 0; l < numLayers; l++)
-        //        {
-        //            auto pAnimLayer = pAnimStack->GetSrcObject<FbxAnimLayer>(l);
-        //            auto numNodes = pAnimLayer->GetSrcObjectCount<FbxAnimCurveNode>();
-        //            for (auto n = 0; n < numNodes; n++)
-        //            {
-        //                auto pCurveNode = pAnimLayer->GetSrcObject<FbxAnimCurveNode>(n);
-        //                const auto &property = pCurveNode->GetDstProperty();
-        //                auto pValue = property.Get<FbxDouble3>();
-        //                auto pType = property.GetPropertyDataType().GetType();
-        //
-        //                const auto &parent = property.GetParent();
-        //
-        //                if (pCurveNode->GetCurveCount(0) > 0)
-        //                {
-        //                    printf("%s fbx=%s parent=%s\n", property.GetName().Buffer(), property.GetFbxObject()->GetName(), parent.GetName().Buffer());
-        //                    for (auto c = 0; c < pCurveNode->GetCurveCount(0); c++)
-        //                    {
-        //                        auto pCurve = pCurveNode->GetCurve(0, c);
-        //                        for( auto k = 0; k < pCurve->KeyGetCount(); k++)
-        //                            {
-        //                                auto pCurveKey = pCurve->KeyGet(k);
-        //                                printf("");
-        //                            }
-        //                        printf("");
-        //                    }
-        //                }
-        //                printf("%p\n", pCurveNode);
-        //            }
-        //
-        //            printf("");
-        //        }
+        fo.print(debug, [&]{
+            printf("[Animation][%d/%d] %s\n", i + 1, numStacks, pAnimStack->GetName());
+        });
     }
     
-    auto stat = dumpHierarchy(pScene->GetRootNode());
-    printf("[Mesh] vertices=%d polygons=%d triangles=%d\n", stat.vertices, stat.polygons, stat.triangles);
+    auto stat = dumpNodeHierarchy(pScene->GetRootNode(), fo);
+    fo.print(debug, [&]{
+        printf("# vertices=%d polygons=%d triangles=%d\n", stat.vertices, stat.polygons, stat.triangles);
+    });
+    
+    fo.print(check, [&]{
+        printf("%s %d %d %d\n", fo.filename.c_str(), stat.vertices, stat.polygons, stat.triangles);
+    });
+    
+    statistics += stat;
     
     pScene->Destroy();
     
@@ -178,11 +344,18 @@ int main(int argc, const char * argv[])
     FbxManager* pManager = FbxManager::Create();
     pManager->SetIOSettings(FbxIOSettings::Create(pManager, IOSROOT));
     
+    MeshStatistics statistics;
     for (auto i = 1; i < argc; i++)
     {
-        printf("[%d/%d] %s\n", i, argc - 1, argv[i]);
-        process(argv[i], pManager);
-        printf("\n");
+        FileOptions fo(argv[i]);
+        fo.print(debug, [&]{printf("[%d/%d] %s\n", i, argc - 1, argv[i]);});
+        process(fo, pManager, statistics);
+        fo.print(debug, [&]{printf("\n");});
+    }
+    
+    if (argc > 2)
+    {
+        printf("[] vertices=%d polygons=%d triangles=%d\n", statistics.vertices, statistics.polygons, statistics.triangles);
     }
     
     pManager->Destroy();

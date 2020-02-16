@@ -52,7 +52,11 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/larryhou/Downloads/sample.fbx"
+            argument = "/Users/larryhou/Downloads/sample.fbx?debug&amp;mesh"
+            isEnabled = "NO">
+         </CommandLineArgument>
+         <CommandLineArgument
+            argument = "/Volumes/Corestone/Documents/Workspace/TheNextMOBA_TRK/Assets/ArtResource/CaptainPBR/Captain_207/Captain_2071_rig.FBX?debug&amp;mesh"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
