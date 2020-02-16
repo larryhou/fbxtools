@@ -165,7 +165,10 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.write('V');
     auto numVertices = mesh->GetPolygonVertexCount();
     fs.write<int>(numVertices);
-    fs.write<FbxVector4>(mesh->GetControlPoints(), numVertices);
+    for (auto i = 0; i < numVertices; i++)
+    {
+        fs.write<FbxVector4>(mesh->GetControlPointAt(i));
+    }
     
     // triangles
     fs.write('P');
