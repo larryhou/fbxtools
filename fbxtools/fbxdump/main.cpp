@@ -174,8 +174,8 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     auto numTriangles = 0;
     for (auto i = 0; i < mesh->GetPolygonCount(); i++)
     {
-        auto sides = mesh->GetPolygonSize(i);
-        for (auto t = 0; t < sides - 2; t++) // auto split polygons with more than 3 vertices
+        auto size = mesh->GetPolygonSize(i);
+        for (auto t = 0; t < size - 2; t++) // auto split polygons with more than 3 vertices
         {
             ++numTriangles;
             for (auto n = 0; n < 3; n++) // write single triangle

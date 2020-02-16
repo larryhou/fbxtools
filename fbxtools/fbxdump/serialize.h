@@ -45,7 +45,7 @@ void MeshFile::write(const T v)
 template<typename T>
 void MeshFile::write(const T *v, int count)
 {
-    __fs.write((const char *)v, sizeof(v) * count);
+    __fs.write((const char *)v, sizeof(T) * count);
 }
 
 #endif /* serialize_h */
