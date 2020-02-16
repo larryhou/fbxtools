@@ -163,12 +163,10 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.write('H');
     // vertices
     fs.write('V');
-    auto numVertices = mesh->GetPolygonVertexCount();
+    auto numVertices = mesh->GetControlPointsCount();
+    
     fs.write<int>(numVertices);
-    for (auto i = 0; i < numVertices; i++)
-    {
-        fs.write<FbxVector4>(mesh->GetControlPointAt(i));
-    }
+    fs.write<FbxVector4>(mesh->GetControlPoints(), numVertices);
     
     // triangles
     fs.write('P');
@@ -274,7 +272,7 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
                 usedVertexCount += size;
             }
             auto wastes = mesh->GetPolygonVertexCount() - usedVertexCount;
-            stat.vertices += mesh->GetPolygonVertexCount();
+            stat.vertices += mesh->GetControlPointsCount();
             stat.polygons += polygonCount;
             stat.triangles += triangleCount;
             stat.wastes += wastes;
