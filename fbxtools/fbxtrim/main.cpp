@@ -48,6 +48,16 @@ void process(std::string filename, FbxManager *pManager)
         {
             obj->ConnectDstObject(tScene);
         }
+        
+        if (obj->Is<FbxPose>())
+        {
+            auto pose = static_cast<FbxPose *>(obj);
+            for (auto n = 0; n < pose->GetCount(); n++)
+            {
+                auto node = pose->GetNode(n);
+                node->GetName();
+            }
+        }
     }
     fScene->DisconnectAllSrcObject();
     
