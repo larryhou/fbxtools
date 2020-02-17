@@ -292,7 +292,7 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
             stat.triangles += triangleCount;
             stat.wastes += wastes;
             fo.print(debug, [&]{
-                printf(" vertices=%d polygons=%d triangles=%d", mesh->GetPolygonVertexCount(), polygonCount, triangleCount);
+                printf(" vertices=%d polygons=%d triangles=%d", mesh->GetControlPointsCount(), polygonCount, triangleCount);
             });
             
             if (fo.mesh) { exportMesh(mesh, fo); }
