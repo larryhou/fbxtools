@@ -13,6 +13,12 @@
 		6B28FEED23F98AB500E6CBE9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6B28FEEC23F98AB500E6CBE9 /* main.cpp */; };
 		6B28FEF123F98AE100E6CBE9 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEE123F7DE8700E6CBE9 /* CoreFoundation.framework */; };
 		6B28FEF223F98B0900E6CBE9 /* libfbxsdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */; };
+		6B28FEFC23FA467500E6CBE9 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEFB23FA467500E6CBE9 /* libxml2.tbd */; };
+		6B28FEFF23FA46BE00E6CBE9 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEFE23FA46BE00E6CBE9 /* libiconv.tbd */; };
+		6B28FF0123FA474A00E6CBE9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FF0023FA474A00E6CBE9 /* libz.tbd */; };
+		6B28FF0223FA475F00E6CBE9 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEFB23FA467500E6CBE9 /* libxml2.tbd */; };
+		6B28FF0323FA476500E6CBE9 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEFE23FA46BE00E6CBE9 /* libiconv.tbd */; };
+		6B28FF0423FA476A00E6CBE9 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FF0023FA474A00E6CBE9 /* libz.tbd */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +50,12 @@
 		6B28FEE423F95B9700E6CBE9 /* serialize.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = serialize.h; sourceTree = "<group>"; };
 		6B28FEEA23F98AB500E6CBE9 /* fbxtrim */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fbxtrim; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B28FEEC23F98AB500E6CBE9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		6B28FEF323FA455700E6CBE9 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
+		6B28FEF723FA461E00E6CBE9 /* libxml2.2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.2.tbd; path = usr/lib/libxml2.2.tbd; sourceTree = SDKROOT; };
+		6B28FEF923FA464F00E6CBE9 /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
+		6B28FEFB23FA467500E6CBE9 /* libxml2.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libxml2.tbd; path = usr/lib/libxml2.tbd; sourceTree = SDKROOT; };
+		6B28FEFE23FA46BE00E6CBE9 /* libiconv.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libiconv.tbd; path = usr/lib/libiconv.tbd; sourceTree = SDKROOT; };
+		6B28FF0023FA474A00E6CBE9 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +63,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B28FF0123FA474A00E6CBE9 /* libz.tbd in Frameworks */,
+				6B28FEFF23FA46BE00E6CBE9 /* libiconv.tbd in Frameworks */,
+				6B28FEFC23FA467500E6CBE9 /* libxml2.tbd in Frameworks */,
 				6B28FEE223F7DE8700E6CBE9 /* CoreFoundation.framework in Frameworks */,
 				6B28FEE023F7DE0700E6CBE9 /* libfbxsdk.a in Frameworks */,
 			);
@@ -60,6 +75,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6B28FF0423FA476A00E6CBE9 /* libz.tbd in Frameworks */,
+				6B28FF0323FA476500E6CBE9 /* libiconv.tbd in Frameworks */,
+				6B28FF0223FA475F00E6CBE9 /* libxml2.tbd in Frameworks */,
 				6B28FEF123F98AE100E6CBE9 /* CoreFoundation.framework in Frameworks */,
 				6B28FEF223F98B0900E6CBE9 /* libfbxsdk.a in Frameworks */,
 			);
@@ -99,6 +117,12 @@
 		6B28FEDE23F7DDD800E6CBE9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6B28FF0023FA474A00E6CBE9 /* libz.tbd */,
+				6B28FEFE23FA46BE00E6CBE9 /* libiconv.tbd */,
+				6B28FEFB23FA467500E6CBE9 /* libxml2.tbd */,
+				6B28FEF923FA464F00E6CBE9 /* libc++.tbd */,
+				6B28FEF723FA461E00E6CBE9 /* libxml2.2.tbd */,
+				6B28FEF323FA455700E6CBE9 /* SystemConfiguration.framework */,
 				6B28FEE123F7DE8700E6CBE9 /* CoreFoundation.framework */,
 				6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */,
 			);
