@@ -129,6 +129,7 @@ void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
 {
     FbxLayerElementArrayTemplate<T> &data = element->GetDirectArray();
     fs.write<char>('d');
+    fs.write<int>(data.GetCount());
     for (auto i = 0; i < data.GetCount(); i++)
     {
         fs.write<T>(data.GetAt(i));
@@ -140,6 +141,7 @@ void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
     {
         FbxLayerElementArrayTemplate<int> &indice = element->GetIndexArray();
         fs.write('i');
+        fs.write<int>(indice.GetCount());
         for (auto i = 0; i < indice.GetCount(); i++)
         {
             fs.write<int>(indice.GetAt(i));
@@ -169,18 +171,20 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.write('H');
     // vertices
     fs.write('V');
-    auto numVertices = mesh->GetControlPointsCount();
-    fs.write<int>(numVertices);
-    fs.write<FbxVector4>(mesh->GetControlPoints(), numVertices);
+    auto numControlVertices = mesh->GetControlPointsCount();
+    fs.write<int>(numControlVertices);
+    fs.write<FbxVector4>(mesh->GetControlPoints(), numControlVertices);
     
     // triangles
     fs.write('T');
     auto offset = fs.tell();
     fs.write<int>(0); // triangle count
     auto numTriangles = 0;
+    auto numPolygonVertices = 0;
     for (auto i = 0; i < mesh->GetPolygonCount(); i++)
     {
         auto size = mesh->GetPolygonSize(i);
+        numPolygonVertices += size;
         for (auto t = 0; t < size - 2; t++) // auto split polygons with more than 3 vertices
         {
             ++numTriangles;
@@ -197,6 +201,20 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.seek(offset, std::fstream::beg);
     fs.write<int>(numTriangles);
     fs.seek(position, std::fstream::beg); // restore cursor
+    
+    // encode polygon vertices
+    fs.write<char>('P');
+    fs.write<int>(numPolygonVertices);
+    for (auto i = 0; i < mesh->GetPolygonCount(); i++)
+    {
+        for (auto t = 0; t < mesh->GetPolygonSize(i); t++)
+        {
+            auto index = mesh->GetPolygonVertex(i, t);
+            fs.write<int>(index);
+        }
+    }
+    
+    fs.write<char>('Z');
     
     // encode normals
     auto layer = mesh->GetLayer(0);
