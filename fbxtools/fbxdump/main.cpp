@@ -155,7 +155,13 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     std::string workspace = fo.filename.substr(0, pos) + ".fbm";
     mkdir(workspace.c_str(), 0777);
     
-    std::string filename = workspace + "/" + mesh->GetName() + ".mesh";
+    std::string name = mesh->GetName();
+    if (name.empty())
+    {
+        name = mesh->GetNode()->GetName();
+    }
+    
+    std::string filename = workspace + "/" + name + ".mesh";
     MeshFile fs(filename.c_str());
     fs.write('M');
     fs.write('E');
