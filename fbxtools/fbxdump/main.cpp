@@ -14,6 +14,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <vector>
 #include <map>
 
 #include "serialize.h"
@@ -173,26 +174,32 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.write('V');
     auto numControlVertices = mesh->GetControlPointsCount();
     fs.write<int>(numControlVertices);
-    fs.write<FbxVector4>(mesh->GetControlPoints(), numControlVertices);
+    for (auto i = 0; i < numControlVertices; i++)
+    {
+        fs.write<FbxVector4>(mesh->GetControlPointAt(i));
+    }
     
     // triangles
     fs.write('T');
     auto offset = fs.tell();
     fs.write<int>(0); // triangle count
     auto numTriangles = 0;
-    auto numPolygonVertices = 0;
+    std::vector<int> polygonVertices;
     for (auto i = 0; i < mesh->GetPolygonCount(); i++)
     {
         auto size = mesh->GetPolygonSize(i);
-        numPolygonVertices += size;
-        for (auto t = 0; t < size - 2; t++) // auto split polygons with more than 3 vertices
+        for (auto t = 0; t < size; t++) // auto split polygons with more than 3 vertices
         {
-            ++numTriangles;
-            for (auto n = 0; n < 3; n++) // write single triangle
+            auto vertex = mesh->GetPolygonVertex(i, t);
+            if (t < size - 2)
             {
-                auto index = mesh->GetPolygonVertex(i, t + n);
-                fs.write<int>(index);
+                numTriangles += 1;
+                for (auto n = 0; n < 3; n++) // write single triangle
+                {
+                    fs.write<int>((int)polygonVertices.size() + n);
+                }
             }
+            polygonVertices.push_back(vertex);
         }
     }
     
@@ -204,16 +211,8 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     
     // encode polygon vertices
     fs.write<char>('P');
-    fs.write<int>(numPolygonVertices);
-    for (auto i = 0; i < mesh->GetPolygonCount(); i++)
-    {
-        for (auto t = 0; t < mesh->GetPolygonSize(i); t++)
-        {
-            auto index = mesh->GetPolygonVertex(i, t);
-            fs.write<int>(index);
-        }
-    }
-    
+    fs.write<int>((int)polygonVertices.size());
+    fs.write<int>(&polygonVertices.front(), (int)polygonVertices.size());
     fs.write<char>('Z');
     
     // encode normals

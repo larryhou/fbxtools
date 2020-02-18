@@ -27,6 +27,8 @@ public:
         __fs.seekg(pos, whence);
     }
     
+    
+    
     template<typename T>
     void write(const T v);
 
@@ -46,6 +48,31 @@ template<typename T>
 void MeshFile::write(const T *v, int count)
 {
     __fs.write((const char *)v, sizeof(T) * count);
+}
+
+template<>
+void MeshFile::write(const FbxVector4 v)
+{
+    write<float>(static_cast<float>(v.mData[0]));
+    write<float>(static_cast<float>(v.mData[1]));
+    write<float>(static_cast<float>(v.mData[2]));
+    write<float>(static_cast<float>(v.mData[3]));
+}
+
+template<>
+void MeshFile::write(const FbxVector2 v)
+{
+    write<float>(static_cast<float>(v.mData[0]));
+    write<float>(static_cast<float>(v.mData[1]));
+}
+
+template<>
+void MeshFile::write(const FbxColor v)
+{
+    write<float>(static_cast<float>(v.mRed));
+    write<float>(static_cast<float>(v.mGreen));
+    write<float>(static_cast<float>(v.mBlue));
+    write<float>(static_cast<float>(v.mAlpha));
 }
 
 #endif /* serialize_h */
