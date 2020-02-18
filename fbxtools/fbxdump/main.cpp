@@ -130,6 +130,7 @@ void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
 {
     FbxLayerElementArrayTemplate<T> &data = element->GetDirectArray();
     fs.write<char>('d');
+    fs.write<char>(element->GetMappingMode());
     fs.write<int>(data.GetCount());
     for (auto i = 0; i < data.GetCount(); i++)
     {
