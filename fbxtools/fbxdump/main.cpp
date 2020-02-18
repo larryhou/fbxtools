@@ -132,6 +132,7 @@ void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
     fs.write<char>('d');
     fs.write<char>(element->GetMappingMode());
     fs.write<int>(data.GetCount());
+    fs.algin();
     for (auto i = 0; i < data.GetCount(); i++)
     {
         fs.write<T>(data.GetAt(i));
@@ -144,6 +145,7 @@ void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
         FbxLayerElementArrayTemplate<int> &indice = element->GetIndexArray();
         fs.write('i');
         fs.write<int>(indice.GetCount());
+        fs.algin();
         for (auto i = 0; i < indice.GetCount(); i++)
         {
             fs.write<int>(indice.GetAt(i));
@@ -175,6 +177,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.write('V');
     auto numControlVertices = mesh->GetControlPointsCount();
     fs.write<int>(numControlVertices);
+    fs.algin();
     for (auto i = 0; i < numControlVertices; i++)
     {
         fs.write<FbxVector4>(mesh->GetControlPointAt(i));
@@ -186,6 +189,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.write<int>(0); // triangle count
     auto numTriangles = 0;
     std::vector<int> polygonVertices;
+    fs.algin();
     for (auto i = 0; i < mesh->GetPolygonCount(); i++)
     {
         auto size = mesh->GetPolygonSize(i);
@@ -213,6 +217,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     // encode polygon vertices
     fs.write<char>('P');
     fs.write<int>((int)polygonVertices.size());
+    fs.algin();
     fs.write<int>(&polygonVertices.front(), (int)polygonVertices.size());
     fs.write<char>('Z');
     

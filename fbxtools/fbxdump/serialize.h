@@ -27,7 +27,14 @@ public:
         __fs.seekg(pos, whence);
     }
     
-    
+    void algin(int size = 8)
+    {
+        auto mode = __fs.tellg() % size;
+        if (mode != 0)
+        {
+            for (auto i = 0; i < size - mode; i++){__fs.put(0);}
+        }
+    }
     
     template<typename T>
     void write(const T v);
