@@ -57,6 +57,7 @@ struct FileOptions
     bool mesh;
     bool texture;
     bool check;
+    bool obj;
     
     FileOptions(std::string file)
     {
@@ -92,6 +93,7 @@ struct FileOptions
             ++iter;
         }
         
+        obj = get("obj");
         mesh = get("mesh");
         texture = get("texture");
         if (get("debug")) { filter = ::debug; }
@@ -154,6 +156,116 @@ void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
 }
 
 #include <sys/stat.h>
+
+void exportOBJ(FbxMesh *mesh, FileOptions &fo)
+{
+    auto pos = fo.filename.rfind('.');
+    std::string workspace = fo.filename.substr(0, pos) + ".fbm";
+    mkdir(workspace.c_str(), 0777);
+    
+    std::string name = mesh->GetName();
+    if (name.empty())
+    {
+        name = mesh->GetNode()->GetName();
+    }
+    
+    std::string filename = workspace + "/" + name + ".obj";
+    MeshFile fs(filename.c_str());
+    
+    char line[1024];
+    for (auto i = 0; i < mesh->GetControlPointsCount(); i++)
+    {
+        auto point = mesh->GetControlPointAt(i);
+        auto size = sprintf(line, "v %.6f %.6f %.6f \n", point.mData[0], point.mData[1], point.mData[2]);
+        fs.write(line, size);
+    }
+    
+    std::function<int32_t(int32_t, int32_t)> normalMapping = nullptr;
+    auto normals = mesh->GetElementNormal();
+    if (normals != nullptr)
+    {
+        auto &indices = normals->GetIndexArray();
+        auto &directs = normals->GetDirectArray();
+        if (normals->GetReferenceMode() == fbxsdk::FbxLayerElement::eDirect)
+        {
+            normalMapping = [&](int32_t pi, int32_t ci)->int32_t
+            {
+                return ci;
+            };
+        }
+        else
+        {
+            normalMapping = [&](int32_t pi, int32_t ci)->int32_t
+            {
+                return indices[pi];
+            };
+        }
+        
+        for (auto i = 0; i < directs.GetCount(); i++)
+        {
+            auto n = directs.GetAt(i);
+            auto size = sprintf(line, "vn %.6f %.6f %.6f\n", n.mData[0], n.mData[1], n.mData[2]);
+            fs.write(line, size);
+        }
+    }
+    
+    std::function<int32_t(int32_t, int32_t)> uvMapping = nullptr;
+    auto uvs = mesh->GetElementUV();
+    if (uvs != nullptr)
+    {
+        auto &indices = uvs->GetIndexArray();
+        auto &directs = uvs->GetDirectArray();
+        if (uvs->GetReferenceMode() == fbxsdk::FbxLayerElement::eDirect)
+        {
+            uvMapping = [&](int32_t pi, int32_t ci)->int32_t
+            {
+                return ci;
+            };
+        }
+        else
+        {
+            uvMapping = [&](int32_t pi,  int32_t ci)->int32_t
+            {
+                return indices[pi];
+            };
+        }
+        
+        for (auto i = 0; i < directs.GetCount(); i++)
+        {
+            auto n = directs.GetAt(i);
+            auto size = sprintf(line, "vt %.6f %.6f\n", n.mData[0], n.mData[1]);
+            fs.write(line, size);
+        }
+    }
+    
+    char *ptr = nullptr;
+    auto polygonVertexIndex = 0;
+    auto controlVertexIndex = 0;
+    for (auto i = 0; i < mesh->GetPolygonCount(); i++)
+    {
+        ptr = line;
+        ptr += sprintf(ptr, "f");
+        for (auto n = 0; n < mesh->GetPolygonSize(i); n++)
+        {
+            controlVertexIndex = mesh->GetPolygonVertex(i, n);
+            ptr += sprintf(ptr, " %d", controlVertexIndex + 1);
+            if (uvMapping != nullptr)
+            {
+                ptr += sprintf(ptr, "/%d", uvMapping(polygonVertexIndex, controlVertexIndex) + 1);
+            }
+            
+            if (normals != nullptr)
+            {
+                if (uvMapping == nullptr) { ptr += sprintf(ptr, "/"); }
+                ptr += sprintf(ptr, "/%d", normalMapping(polygonVertexIndex, controlVertexIndex) + 1);
+            }
+            
+            polygonVertexIndex++;
+        }
+        ptr += sprintf(ptr, "\n");
+        fs.write(line, ptr - line);
+    }
+}
 
 void exportMesh(FbxMesh *mesh, FileOptions &fo)
 {
@@ -325,6 +437,7 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
             });
             
             if (fo.mesh) { exportMesh(mesh, fo); }
+            if (fo.obj) {exportOBJ(mesh, fo);}
         }
         fo.print(debug, [&]{printf("\n");});
         stat += dumpNodeHierarchy(child, fo, indent + (closed ? " " : "│") + "  ");
@@ -365,7 +478,7 @@ bool process(FileOptions &fo, FbxManager *pManager, MeshStatistics &statistics)
             printf("[Animation][%d/%d] %s\n", i + 1, numStacks, pAnimStack->GetName());
         });
     }
-    
+    auto unit = FbxSystemUnit::cm;
     auto stat = dumpNodeHierarchy(pScene->GetRootNode(), fo);
     fo.print(debug, [&]{
         printf("# vertices=%d polygons=%d triangles=%d\n", stat.vertices, stat.polygons, stat.triangles);

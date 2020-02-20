@@ -40,7 +40,7 @@ public:
     void write(const T v);
 
     template<typename T>
-    void write(const T *v, int count);
+    void write(const T *v, size_t count);
     
     ~MeshFile() { __fs.close();  }
 };
@@ -52,9 +52,15 @@ void MeshFile::write(const T v)
 }
 
 template<typename T>
-void MeshFile::write(const T *v, int count)
+void MeshFile::write(const T *v, size_t count)
 {
     __fs.write((const char *)v, sizeof(T) * count);
+}
+
+template<>
+void MeshFile::write(const char * v, size_t count)
+{
+    __fs.write(v, count);
 }
 
 template<>
