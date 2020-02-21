@@ -17,7 +17,8 @@
 #include <vector>
 #include <map>
 
-#include "serialize.h"
+#include "../common/arguments.h"
+#include "../common/serialize.h"
 
 struct MeshStatistics
 {
@@ -44,55 +45,15 @@ struct MeshStatistics
     }
 };
 
-enum TerminalFilter
+struct FileOptions: public ArgumentOptions
 {
-    none = 0, error, info, check, debug
-};
-
-struct FileOptions
-{
-    std::string filename;
-    std::map<std::string, std::string> data;
-    TerminalFilter filter = debug;
     bool mesh;
     bool texture;
     bool check;
     bool obj;
     
-    FileOptions(std::string file)
+    FileOptions(std::string file): ArgumentOptions(file)
     {
-        filename = file;
-        auto iter = file.begin();
-        while (iter != file.end())
-        {
-            if (*iter == '?')
-            {
-                filename = std::string(file.begin(), iter);
-                
-                filter = ::info;
-                std::string parameters(iter + 1, file.end());
-                
-                std::string option;
-                std::stringstream stream(parameters);
-                while (getline(stream, option, '&'))
-                {
-                    auto pos = option.find('=');
-                    if (pos == std::string::npos)
-                    {
-                        data.insert(std::make_pair(option, std::string()));
-                    }
-                    else
-                    {
-                        auto label = option.substr(0, pos);
-                        auto value = option.substr(pos + 1);
-                        data.insert(std::make_pair(label, value));
-                    }
-                }
-                break;
-            }
-            ++iter;
-        }
-        
         obj = get("obj");
         mesh = get("mesh");
         texture = get("texture");
@@ -101,34 +62,11 @@ struct FileOptions
         check = get("check");
         if (check) { filter = ::check; }
     }
-    
-    bool get(std::string key)
-    {
-        auto iter = data.find(key);
-        if (iter == data.end()) { return false; }
-        auto &v = iter->second;
-        if (v.empty()) { return true; }
-        return atoi(v.c_str()) != 0;
-    }
-    
-    bool get(std::string key, std::string &value)
-    {
-        auto iter = data.find(key);
-        if (iter == data.end()) { return false; }
-        value = iter->second;
-        return true;
-    }
-    
-    void print(TerminalFilter filter, std::function<void()> closure)
-    {
-        if (filter == this->filter) { closure(); }
-    }
 };
 
 
-
 template<typename T>
-void encode(FbxLayerElementTemplate<T> *element, MeshFile &fs)
+void encode(FbxLayerElementTemplate<T> *element, MeshStream &fs)
 {
     FbxLayerElementArrayTemplate<T> &data = element->GetDirectArray();
     fs.write<char>('d');
@@ -170,7 +108,7 @@ void exportOBJ(FbxMesh *mesh, FileOptions &fo)
     }
     
     std::string filename = workspace + "/" + name + ".obj";
-    MeshFile fs(filename.c_str());
+    MeshStream fs(filename.c_str());
     
     char line[1024];
     for (auto i = 0; i < mesh->GetControlPointsCount(); i++)
@@ -280,7 +218,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     }
     
     std::string filename = workspace + "/" + name + ".mesh";
-    MeshFile fs(filename.c_str());
+    MeshStream fs(filename.c_str());
     fs.write('M');
     fs.write('E');
     fs.write('S');

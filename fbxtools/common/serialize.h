@@ -12,11 +12,11 @@
 #include <stdio.h>
 #include <fstream>
 
-class MeshFile
+class MeshStream
 {
     std::fstream __fs;
 public:
-    MeshFile(const char *filename)
+    MeshStream(const char *filename)
     {
         __fs.open(filename, std::fstream::out);
     }
@@ -42,29 +42,29 @@ public:
     template<typename T>
     void write(const T *v, size_t count);
     
-    ~MeshFile() { __fs.close();  }
+    ~MeshStream() { __fs.close();  }
 };
 
 template<typename T>
-void MeshFile::write(const T v)
+void MeshStream::write(const T v)
 {
     __fs.write((const char *)&v, sizeof(T));
 }
 
 template<typename T>
-void MeshFile::write(const T *v, size_t count)
+void MeshStream::write(const T *v, size_t count)
 {
     __fs.write((const char *)v, sizeof(T) * count);
 }
 
 template<>
-void MeshFile::write(const char * v, size_t count)
+void MeshStream::write(const char * v, size_t count)
 {
     __fs.write(v, count);
 }
 
 template<>
-void MeshFile::write(const FbxVector4 v)
+void MeshStream::write(const FbxVector4 v)
 {
     write<float>(static_cast<float>(v.mData[0]));
     write<float>(static_cast<float>(v.mData[1]));
@@ -73,14 +73,14 @@ void MeshFile::write(const FbxVector4 v)
 }
 
 template<>
-void MeshFile::write(const FbxVector2 v)
+void MeshStream::write(const FbxVector2 v)
 {
     write<float>(static_cast<float>(v.mData[0]));
     write<float>(static_cast<float>(v.mData[1]));
 }
 
 template<>
-void MeshFile::write(const FbxColor v)
+void MeshStream::write(const FbxColor v)
 {
     write<float>(static_cast<float>(v.mRed));
     write<float>(static_cast<float>(v.mGreen));
