@@ -107,13 +107,15 @@ void exportOBJ(FbxMesh *mesh, FileOptions &fo)
         name = mesh->GetNode()->GetName();
     }
     
+    auto unit = mesh->GetScene()->GetGlobalSettings().GetSystemUnit();
+    
     std::string filename = workspace + "/" + name + ".obj";
     MeshStream fs(filename.c_str());
     
     char line[1024];
     for (auto i = 0; i < mesh->GetControlPointsCount(); i++)
     {
-        auto point = mesh->GetControlPointAt(i);
+        auto point = mesh->GetControlPointAt(i) * (unit.GetScaleFactor() / 100);
         auto size = sprintf(line, "v %.6f %.6f %.6f \n", point.mData[0], point.mData[1], point.mData[2]);
         fs.write(line, size);
     }
@@ -217,6 +219,8 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
         name = mesh->GetNode()->GetName();
     }
     
+    auto unit = mesh->GetScene()->GetGlobalSettings().GetSystemUnit();
+    
     std::string filename = workspace + "/" + name + ".mesh";
     MeshStream fs(filename.c_str());
     fs.write('M');
@@ -230,7 +234,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.algin();
     for (auto i = 0; i < numControlVertices; i++)
     {
-        fs.write<FbxVector4>(mesh->GetControlPointAt(i));
+        fs.write<FbxVector4>(mesh->GetControlPointAt(i) * (unit.GetScaleFactor() / 100));
     }
     
     // triangles
