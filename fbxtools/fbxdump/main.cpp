@@ -173,7 +173,7 @@ void exportOBJ(FbxMesh *mesh, FileOptions &fo)
         for (auto i = 0; i < directs.GetCount(); i++)
         {
             auto n = directs.GetAt(i);
-            auto size = sprintf(line, "vt %.6f %.6f\n", n.mData[0], n.mData[1]);
+            auto size = sprintf(line, "vt %.6f %.6f\n", n.mData[0], 1 - n.mData[1]);
             fs.write(line, size);
         }
     }
@@ -247,16 +247,16 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     for (auto i = 0; i < mesh->GetPolygonCount(); i++)
     {
         auto size = mesh->GetPolygonSize(i);
+        auto anchor = polygonVertices.size();
         for (auto t = 0; t < size; t++) // auto split polygons with more than 3 vertices
         {
             auto vertex = mesh->GetPolygonVertex(i, t);
-            if (t < size - 2)
+            if (t > 0 && t < size - 1)
             {
+                fs.write<int>((int)anchor);
+                fs.write<int>((int)polygonVertices.size());
+                fs.write<int>((int)polygonVertices.size() + 1);
                 numTriangles += 1;
-                for (auto n = 0; n < 3; n++) // write single triangle
-                {
-                    fs.write<int>((int)polygonVertices.size() + n);
-                }
             }
             polygonVertices.push_back(vertex);
         }
