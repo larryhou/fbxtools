@@ -14,12 +14,31 @@
 
 void trim(FbxMesh *mesh)
 {
-    mesh->GetNode()->RemoveAllMaterials();
-    for (auto i = 0; i < mesh->GetLayerCount(); i++)
+    auto count = 0;
+    if ((count = mesh->GetElementMaterialCount()))
     {
-        auto layer = mesh->GetLayer(i);
-        layer->SetVertexColors(NULL);
-        layer->SetMaterials(NULL);
+        for (auto i = 0; i < count; i++)
+        {
+            mesh->RemoveElementMaterial(mesh->GetElementMaterial(0));
+        }
+        
+        mesh->GetNode()->RemoveAllMaterials();
+    }
+    
+    if ((count = mesh->GetElementVertexColorCount()))
+    {
+        for (auto i = 0; i < count; i++)
+        {
+            mesh->RemoveElementVertexColor(mesh->GetElementVertexColor(0));
+        }
+    }
+    
+    if ((count = mesh->GetElementUVCount()))
+    {
+        for (auto i = 1; i < count; i++)
+        {
+            mesh->RemoveElementUV(mesh->GetElementUV(1));
+        }
     }
 }
 
