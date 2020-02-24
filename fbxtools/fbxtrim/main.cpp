@@ -12,6 +12,44 @@
 #include <string>
 #include <vector>
 
+void trim(FbxMesh *mesh)
+{
+    mesh->GetNode()->RemoveAllMaterials();
+    for (auto i = 0; i < mesh->GetLayerCount(); i++)
+    {
+        auto layer = mesh->GetLayer(i);
+        layer->SetVertexColors(NULL);
+        layer->SetMaterials(NULL);
+    }
+}
+
+void trim(FbxScene *scene)
+{
+    for (auto i = 0; i < scene->GetSrcObjectCount(); i++)
+    {
+        auto obj = scene->GetSrcObject(i);
+        if (obj->Is<FbxNode>())
+        {
+            auto node = static_cast<FbxNode *>(obj);
+            auto attribute = node->GetNodeAttribute();
+            if (!attribute) {continue;}
+            
+            auto type = attribute->GetAttributeType();
+            switch (type)
+            {
+                case FbxNodeAttribute::eMesh:
+                    trim(static_cast<FbxMesh *>(attribute));
+                    break;
+                default:break;
+            }
+        }
+        else if (obj->Is<FbxTexture>())
+        {
+            obj->DisconnectAllDstObject();
+        }
+    }
+}
+
 void process(std::string filename, FbxManager *pManager)
 {
     auto importer = FbxImporter::Create(pManager, "");
@@ -20,50 +58,18 @@ void process(std::string filename, FbxManager *pManager)
         return;
     }
     
-    auto fScene = FbxScene::Create(pManager, "Scene");
-    if (!importer->Import(fScene))
+    auto scene = FbxScene::Create(pManager, "Scene");
+    if (!importer->Import(scene))
     {
         return;
     }
     
     importer->Destroy();
     
-    auto tScene = FbxScene::Create(pManager, "Scene");
-    std::vector<FbxNode *> children;
-    auto root = fScene->GetRootNode();
-    for (auto i = 0; i < root->GetChildCount(); i++)
-    {
-        auto child = root->GetChild(i);
-        children.push_back(child);
-    }
-    for (auto iter = children.begin(); iter != children.end(); iter++)
-    {
-        tScene->GetRootNode()->AddChild(*iter);
-    }
-
-    for (auto i = 0; i < fScene->GetSrcObjectCount(); i++)
-    {
-        auto obj = fScene->GetSrcObject(i);
-        if (obj != root && !obj->Is<FbxGlobalSettings>())
-        {
-            obj->ConnectDstObject(tScene);
-        }
-        
-        if (obj->Is<FbxPose>())
-        {
-            auto pose = static_cast<FbxPose *>(obj);
-            for (auto n = 0; n < pose->GetCount(); n++)
-            {
-                auto node = pose->GetNode(n);
-                node->GetName();
-            }
-        }
-    }
-    fScene->DisconnectAllSrcObject();
+    trim(scene);
     
     auto pos = filename.rfind('.');
     std::string savename = filename.substr(0, pos) + "_t" + filename.substr(pos);
-    pManager->GetIOSettings()->SetBoolProp(EXP_FBX_EMBEDDED, true);
     
     auto exporter = FbxExporter::Create(pManager, "");
     if (!exporter->Initialize(savename.c_str(), -1, pManager->GetIOSettings()))
@@ -71,15 +77,14 @@ void process(std::string filename, FbxManager *pManager)
         return;
     }
     
-    if (!exporter->Export(tScene))
+    if (!exporter->Export(scene))
     {
         return;
     }
     
     printf(">>> %s\n", savename.c_str());
     
-    tScene->Destroy();
-    fScene->Destroy();
+    scene->Destroy();
 }
 
 int main(int argc, const char * argv[])
