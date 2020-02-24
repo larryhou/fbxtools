@@ -332,129 +332,37 @@ std::string describe(FbxLayerElementTemplate<T> *data)
     ptr += sprintf(ptr, " = %d", (int)dsize + isize);
     return buffers::text;
 }
+    
+#ifndef PRINT_MESH_ATTRIBUTE
+#define PRINT_MESH_ATTRIBUTE(FUNC_GET_COUNT,FUNC_GET_LAYOUT, NAME) \
+if ((count = FUNC_GET_COUNT))\
+{\
+    printf("%s+%s\n", indent.c_str(), NAME);\
+    for (auto i = 0; i < count; i++)\
+    {\
+        auto data = FUNC_GET_LAYOUT;\
+        printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());\
+    }\
+}
+
+#endif
 
 void printMeshAttributes(FbxMesh *mesh, std::string indent)
 {
     auto count = 0;
-    if ((count = mesh->GetElementNormalCount()))
-    {
-        printf("%s+Normal\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementNormal(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementUVCount()))
-    {
-        printf("%s+UV\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementUV(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementVertexColorCount()))
-    {
-        printf("%s+VertexColor\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementVertexColor(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementTangentCount()))
-    {
-        printf("%s+Tangent\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementTangent(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementBinormalCount()))
-    {
-        printf("%s+Binormal\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementBinormal(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementMaterialCount()))
-    {
-        printf("%s+Material\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementMaterial(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementPolygonGroupCount()))
-    {
-        printf("%s+PolygonGroup\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementPolygonGroup(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementUserDataCount()))
-    {
-        printf("%s+UserData\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementUserData(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementSmoothingCount()))
-    {
-        printf("%s+Smoothing\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementSmoothing(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementVertexCreaseCount()))
-    {
-        printf("%s+VertexCrease\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementVertexCrease(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementVisibilityCount()))
-    {
-        printf("%s+Visibility\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementVisibility(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
-    
-    if ((count = mesh->GetElementHoleCount()))
-    {
-        printf("%s+Hole\n", indent.c_str());
-        for (auto i = 0; i < count; i++)
-        {
-            auto data = mesh->GetElementHole(i);
-            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
-        }
-    }
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementNormalCount(), mesh->GetElementNormal(i), "Normal");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementUVCount(), mesh->GetElementUV(i), "UV");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementVertexColorCount(), mesh->GetElementVertexColor(i), "VertexColor");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementTangentCount(), mesh->GetElementTangent(i), "Tangent");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementBinormalCount(), mesh->GetElementBinormal(i), "Binormal");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementMaterialCount(), mesh->GetElementMaterial(i), "Material");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementPolygonGroupCount(), mesh->GetElementPolygonGroup(i), "PolygonGroup");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementUserDataCount(), mesh->GetElementUserData(i), "UserData");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementSmoothingCount(), mesh->GetElementSmoothing(i), "Smoothing");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementVertexCreaseCount(), mesh->GetElementVertexCrease(i), "VertexCrease");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementEdgeCreaseCount(), mesh->GetElementEdgeCrease(i), "EdgeCrease");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementVisibilityCount(), mesh->GetElementVisibility(i), "Visibility");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementHoleCount(), mesh->GetElementHole(i), "Hole");
 }
 
 MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string indent = "")
