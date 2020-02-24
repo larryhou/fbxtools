@@ -309,6 +309,154 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     }
 }
 
+namespace buffers
+{
+    char text[1024];
+}
+
+template<typename T>
+std::string describe(FbxLayerElementTemplate<T> *data)
+{
+    char *ptr = buffers::text;
+    auto mode = data->GetReferenceMode();
+    FbxLayerElementArrayTemplate<T> &directs = data->GetDirectArray();
+    auto dsize = directs.GetCount() * sizeof(T);
+    auto isize = 0;
+    ptr += sprintf(ptr, "d(%d,#%d)", (int)dsize, directs.GetCount());
+    if (mode != fbxsdk::FbxLayerElement::eDirect)
+    {
+        auto &indices = data->GetIndexArray();
+        isize = indices.GetCount() * sizeof(int);
+        ptr += sprintf(ptr, " + i(%d,#%d)", isize, indices.GetCount());
+    }
+    ptr += sprintf(ptr, " = %d", (int)dsize + isize);
+    return buffers::text;
+}
+
+void printMeshAttributes(FbxMesh *mesh, std::string indent)
+{
+    auto count = 0;
+    if ((count = mesh->GetElementNormalCount()))
+    {
+        printf("%s+Normal\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementNormal(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementUVCount()))
+    {
+        printf("%s+UV\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementUV(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementVertexColorCount()))
+    {
+        printf("%s+VertexColor\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementVertexColor(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementTangentCount()))
+    {
+        printf("%s+Tangent\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementTangent(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementBinormalCount()))
+    {
+        printf("%s+Binormal\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementBinormal(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementMaterialCount()))
+    {
+        printf("%s+Material\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementMaterial(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementPolygonGroupCount()))
+    {
+        printf("%s+PolygonGroup\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementPolygonGroup(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementUserDataCount()))
+    {
+        printf("%s+UserData\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementUserData(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementSmoothingCount()))
+    {
+        printf("%s+Smoothing\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementSmoothing(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementVertexCreaseCount()))
+    {
+        printf("%s+VertexCrease\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementVertexCrease(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementVisibilityCount()))
+    {
+        printf("%s+Visibility\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementVisibility(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+    
+    if ((count = mesh->GetElementHoleCount()))
+    {
+        printf("%s+Hole\n", indent.c_str());
+        for (auto i = 0; i < count; i++)
+        {
+            auto data = mesh->GetElementHole(i);
+            printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());
+        }
+    }
+}
+
 MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string indent = "")
 {
     MeshStatistics stat;
@@ -382,6 +530,11 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
             if (fo.obj) {exportOBJ(mesh, fo);}
         }
         fo.print(debug, [&]{printf("\n");});
+        if (isMesh)
+        {
+            auto mesh = static_cast<FbxMesh *>(attribute);
+            printMeshAttributes(mesh, (closed ? " " : "│") + indent + "  ");
+        }
         stat += dumpNodeHierarchy(child, fo, indent + (closed ? " " : "│") + "  ");
     }
     
