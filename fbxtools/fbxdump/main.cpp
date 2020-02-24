@@ -313,21 +313,35 @@ namespace buffers
 {
     char text[1024];
 }
+    
+std::string getMappingName(fbxsdk::FbxLayerElement::EMappingMode mode)
+{
+    switch (mode)
+    {
+        case fbxsdk::FbxLayerElement::eByControlPoint: return "BY_CONTROL_POINT";
+        case fbxsdk::FbxLayerElement::eByPolygonVertex: return "BY_POLYGON_VERTEX";
+        case fbxsdk::FbxLayerElement::eByPolygon: return "BY_POLYGON";
+        case fbxsdk::FbxLayerElement::eByEdge: return "BY_EDGE";
+        case fbxsdk::FbxLayerElement::eAllSame: return "SAME";
+        default: return "NONE";
+    }
+}
 
 template<typename T>
 std::string describe(FbxLayerElementTemplate<T> *data)
 {
     char *ptr = buffers::text;
-    auto mode = data->GetReferenceMode();
+    auto mapping = data->GetMappingMode();
+    auto reference = data->GetReferenceMode();
     FbxLayerElementArrayTemplate<T> &directs = data->GetDirectArray();
     auto dsize = directs.GetCount() * sizeof(T);
     auto isize = 0;
-    ptr += sprintf(ptr, "d(%d,#%d)", (int)dsize, directs.GetCount());
-    if (mode != fbxsdk::FbxLayerElement::eDirect)
+    ptr += sprintf(ptr, "%s d<%d,#%d>", getMappingName(mapping).c_str(), (int)dsize, directs.GetCount());
+    if (reference != fbxsdk::FbxLayerElement::eDirect)
     {
         auto &indices = data->GetIndexArray();
         isize = indices.GetCount() * sizeof(int);
-        ptr += sprintf(ptr, " + i(%d,#%d)", isize, indices.GetCount());
+        ptr += sprintf(ptr, " i<%d,#%d>", isize, indices.GetCount());
     }
     ptr += sprintf(ptr, " = %d", (int)dsize + isize);
     return buffers::text;
@@ -337,7 +351,7 @@ std::string describe(FbxLayerElementTemplate<T> *data)
 #define PRINT_MESH_ATTRIBUTE(FUNC_GET_COUNT, FUNC_GET_LAYOUT, NAME) \
 if ((count = FUNC_GET_COUNT))\
 {\
-    printf("%s +%s\n", indent.c_str(), NAME);\
+    printf("%s \e[93m+%s\e[0m\n", indent.c_str(), NAME);\
     for (auto i = 0; i < count; i++)\
     {\
         auto data = FUNC_GET_LAYOUT;\
@@ -352,7 +366,7 @@ void printMeshAttributes(FbxMesh *mesh, std::string indent)
     auto count = 0;
     PRINT_MESH_ATTRIBUTE(mesh->GetElementNormalCount(), mesh->GetElementNormal(i), "Normal");
     PRINT_MESH_ATTRIBUTE(mesh->GetElementUVCount(), mesh->GetElementUV(i), "UV");
-    PRINT_MESH_ATTRIBUTE(mesh->GetElementVertexColorCount(), mesh->GetElementVertexColor(i), "VertexColor");
+    PRINT_MESH_ATTRIBUTE(mesh->GetElementVertexColorCount(), mesh->GetElementVertexColor(i), "Color");
     PRINT_MESH_ATTRIBUTE(mesh->GetElementTangentCount(), mesh->GetElementTangent(i), "Tangent");
     PRINT_MESH_ATTRIBUTE(mesh->GetElementBinormalCount(), mesh->GetElementBinormal(i), "Binormal");
     PRINT_MESH_ATTRIBUTE(mesh->GetElementMaterialCount(), mesh->GetElementMaterial(i), "Material");
@@ -431,7 +445,7 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
             stat.triangles += triangleCount;
             stat.wastes += wastes;
             fo.print(debug, [&]{
-                printf(" vertices=%d polygons=%d triangles=%d", mesh->GetControlPointsCount(), polygonCount, triangleCount);
+                printf(" vertices=%d polygons=%d polygon_vertices=%d triangles=%d", mesh->GetControlPointsCount(), polygonCount, mesh->GetPolygonVertexCount(), triangleCount);
             });
             
             if (fo.mesh) { exportMesh(mesh, fo); }
