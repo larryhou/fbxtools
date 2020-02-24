@@ -351,11 +351,11 @@ std::string describe(FbxLayerElementTemplate<T> *data)
 #define PRINT_MESH_ATTRIBUTE(FUNC_GET_COUNT, FUNC_GET_LAYOUT, NAME) \
 if ((count = FUNC_GET_COUNT))\
 {\
-    printf("%s \e[93m+%s\e[0m\n", indent.c_str(), NAME);\
+    printf("%s \e[37m+%s\e[0m\n", indent.c_str(), NAME);\
     for (auto i = 0; i < count; i++)\
     {\
         auto data = FUNC_GET_LAYOUT;\
-        printf("%s   -[%d] %s\n", indent.c_str(), i, describe(data).c_str());\
+        printf("%s   \e[32m-[%d] %s\e[0m\n", indent.c_str(), i, describe(data).c_str());\
     }\
 }
 
