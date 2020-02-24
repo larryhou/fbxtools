@@ -25,14 +25,14 @@ struct MeshStatistics
     int vertices;
     int polygons;
     int triangles;
-    int wastes;
+    int edges;
     
-    MeshStatistics(int v, int p, int t, int w): vertices(v), polygons(p), triangles(t), wastes(w) {}
+    MeshStatistics(int v, int p, int t, int e): vertices(v), polygons(p), triangles(t), edges(e) {}
     MeshStatistics(): MeshStatistics(0, 0, 0, 0) {}
     
     MeshStatistics operator+(MeshStatistics v)
     {
-        return MeshStatistics(vertices + v.vertices, polygons + v.polygons, triangles + v.triangles, wastes + v.wastes);
+        return MeshStatistics(vertices + v.vertices, polygons + v.polygons, triangles + v.triangles, edges + v.edges);
     }
     
     MeshStatistics& operator+=(MeshStatistics v)
@@ -40,7 +40,7 @@ struct MeshStatistics
         vertices += v.vertices;
         polygons += v.polygons;
         triangles += v.triangles;
-        wastes += v.wastes;
+        edges += edges;
         return *this;
     }
 };
@@ -432,18 +432,14 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
             auto mesh = static_cast<FbxMesh *>(attribute);
             auto polygonCount = mesh->GetPolygonCount();
             auto triangleCount = 0;
-            auto usedVertexCount = 0;
             for (auto p = 0; p < polygonCount; p++)
             {
                 auto size = mesh->GetPolygonSize(p);
                 triangleCount += size - 2;
-                usedVertexCount += size;
             }
-            auto wastes = mesh->GetPolygonVertexCount() - usedVertexCount;
             stat.vertices += mesh->GetControlPointsCount();
             stat.polygons += polygonCount;
             stat.triangles += triangleCount;
-            stat.wastes += wastes;
             fo.print(debug, [&]{
                 printf(" vertices=%d polygons=%d polygon_vertices=%d triangles=%d", mesh->GetControlPointsCount(), polygonCount, mesh->GetPolygonVertexCount(), triangleCount);
             });
