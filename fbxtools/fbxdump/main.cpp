@@ -341,7 +341,7 @@ if ((count = FUNC_GET_COUNT))\
     for (auto i = 0; i < count; i++)\
     {\
         auto data = FUNC_GET_LAYOUT;\
-        printf("%s  -[%d] %s\n", indent.c_str(), i, describe(data).c_str());\
+        printf("%s   -[%d] %s\n", indent.c_str(), i, describe(data).c_str());\
     }\
 }
 
