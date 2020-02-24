@@ -334,10 +334,10 @@ std::string describe(FbxLayerElementTemplate<T> *data)
 }
     
 #ifndef PRINT_MESH_ATTRIBUTE
-#define PRINT_MESH_ATTRIBUTE(FUNC_GET_COUNT,FUNC_GET_LAYOUT, NAME) \
+#define PRINT_MESH_ATTRIBUTE(FUNC_GET_COUNT, FUNC_GET_LAYOUT, NAME) \
 if ((count = FUNC_GET_COUNT))\
 {\
-    printf("%s+%s\n", indent.c_str(), NAME);\
+    printf("%s +%s\n", indent.c_str(), NAME);\
     for (auto i = 0; i < count; i++)\
     {\
         auto data = FUNC_GET_LAYOUT;\
