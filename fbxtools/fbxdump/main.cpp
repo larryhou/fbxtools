@@ -566,7 +566,9 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
         if (isMesh)
         {
             auto mesh = static_cast<FbxMesh *>(attribute);
-            printMeshAttributes(mesh, (closed ? " " : "│") + indent + "  ");
+            fo.print(debug, [&]{
+                printMeshAttributes(mesh, (closed ? " " : "│") + indent + "  ");
+            });
         }
         stat += dumpNodeHierarchy(child, fo, indent + (closed ? " " : "│") + "  ");
     }
