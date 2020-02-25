@@ -52,7 +52,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Users/larryhou/Downloads/sample.fbx?debug&amp;mesh&amp;obj"
+            argument = "/Users/larryhou/Downloads/sample.fbx?debug&amp;mesh&amp;obj&amp;skin"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

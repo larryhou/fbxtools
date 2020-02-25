@@ -16,9 +16,18 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <assert.h>
 
 #include "../common/arguments.h"
 #include "../common/serialize.h"
+
+class FileOptions;
+std::string createWorkspace(FileOptions &fo);
+std::string touch(FileOptions &fo, FbxNodeAttribute *data, std::string extension);
+namespace buffers
+{
+    char text[1024];
+}
 
 struct MeshStatistics
 {
@@ -47,6 +56,7 @@ struct MeshStatistics
 
 struct FileOptions: public ArgumentOptions
 {
+    bool skin;
     bool mesh;
     bool texture;
     bool check;
@@ -56,6 +66,7 @@ struct FileOptions: public ArgumentOptions
     {
         obj = get("obj");
         mesh = get("mesh");
+        skin = get("skin");
         texture = get("texture");
         if (get("debug")) { filter = ::debug; }
         if (get("error")) { filter = ::error; }
@@ -63,7 +74,6 @@ struct FileOptions: public ArgumentOptions
         if (check) { filter = ::check; }
     }
 };
-
 
 template<typename T>
 void encode(FbxLayerElementTemplate<T> *element, MeshStream &fs)
@@ -97,19 +107,9 @@ void encode(FbxLayerElementTemplate<T> *element, MeshStream &fs)
 
 void exportOBJ(FbxMesh *mesh, FileOptions &fo)
 {
-    auto pos = fo.filename.rfind('.');
-    std::string workspace = fo.filename.substr(0, pos) + ".fbm";
-    mkdir(workspace.c_str(), 0777);
-    
-    std::string name = mesh->GetName();
-    if (name.empty())
-    {
-        name = mesh->GetNode()->GetName();
-    }
-    
     auto unit = mesh->GetScene()->GetGlobalSettings().GetSystemUnit();
     
-    std::string filename = workspace + "/" + name + ".obj";
+    std::string filename = touch(fo, mesh, "obj");
     MeshStream fs(filename.c_str());
     
     char line[1024];
@@ -206,22 +206,145 @@ void exportOBJ(FbxMesh *mesh, FileOptions &fo)
         fs.write(line, ptr - line);
     }
 }
-
-void exportMesh(FbxMesh *mesh, FileOptions &fo)
+    
+std::string getLinkModeName(FbxCluster::ELinkMode mode)
+{
+    switch (mode)
+    {
+        case FbxCluster::eNormalize: return "NORMALIZE";
+        case FbxCluster::eAdditive: return "ADDITIVE";
+        case FbxCluster::eTotalOne: return "TOTALONE";
+    }
+}
+    
+struct VertexWeight
+{
+    int32_t index;
+    double weight;
+    FbxSkeleton *skeleton;
+    
+    VertexWeight(int32_t i, double w, FbxSkeleton *s): index(i), weight(w), skeleton(s) {}
+    VertexWeight(): VertexWeight(-1, 0, NULL) {}
+};
+    
+void encode(std::fstream &fs, FbxAMatrix &matrix, std::string indent)
+{
+    char *ptr = buffers::text;
+    ptr += sprintf(ptr, "%s:", indent.c_str());
+    auto v = matrix.GetT();
+    ptr += sprintf(ptr, " T(%f %f %f)", v.mData[0], v.mData[1], v.mData[2]);
+    v = matrix.GetR();
+    ptr += sprintf(ptr, " R(%f %f %f)", v.mData[0], v.mData[1], v.mData[2]);
+    v = matrix.GetS();
+    ptr += sprintf(ptr, " S(%f %f %f)\n", v.mData[0], v.mData[1], v.mData[2]);
+    fs.write(buffers::text, ptr - buffers::text);
+}
+    
+void exportSkin(FbxMesh *mesh, FileOptions &fo)
+{
+    std::map<FbxSkeleton*, FbxCluster *> bones;
+    std::vector<std::vector<VertexWeight>> weights(mesh->GetControlPointsCount());
+    for (auto s = 0; s < mesh->GetDeformerCount(FbxDeformer::eSkin); s++)
+    {
+        auto skin = static_cast<FbxSkin *>(mesh->GetDeformer(s, FbxDeformer::eSkin));
+        for (auto c = 0; c < skin->GetClusterCount(); c++)
+        {
+            auto cluster = skin->GetCluster(c);
+            auto node = cluster->GetLink();
+            auto skeleton = node->GetSkeleton();
+            assert(skeleton != NULL);
+            bones.insert(std::make_pair(skeleton, cluster));
+            auto pti = cluster->GetControlPointIndices();
+            auto ptw = cluster->GetControlPointWeights();
+            for (auto i = 0; i < cluster->GetControlPointIndicesCount(); i++)
+            {
+                assert(*pti < weights.size());
+                auto &record = weights[*pti++];
+                record.push_back(VertexWeight((int32_t)record.size(), *ptw++, skeleton));
+            }
+        }
+    }
+    
+    auto filename = touch(fo, mesh, "skin");
+    std::fstream fs(filename, std::fstream::out);
+    
+    char *ptr;
+    for (auto iter = bones.begin(); iter != bones.end(); iter++)
+    {
+        auto skeleton = iter->first;
+        auto cluster = iter->second;
+        ptr = buffers::text;
+        auto size = sprintf(ptr, "%p ", skeleton);
+        fs.write(buffers::text, size);
+        auto mode = getLinkModeName(cluster->GetLinkMode());
+        fs.write(mode.c_str(), mode.size());
+        fs.put(' ');
+        
+        auto node = skeleton->GetNode();
+        while (node != NULL)
+        {
+            auto name = node->GetName();
+            fs.write(name, strlen(name));
+            node = node->GetParent();
+            if (!node->GetSkeleton()) {break;}
+            fs.put('/');
+        }
+        
+        fs.put('\n');
+        
+        FbxAMatrix matrix;
+        encode(fs, cluster->GetTransformMatrix(matrix), "  self");
+        encode(fs, cluster->GetTransformLinkMatrix(matrix), "  link");
+        if (cluster->GetAssociateModel() != NULL)
+        {
+            encode(fs, cluster->GetTransformAssociateModelMatrix(matrix), "  model");
+        }
+    }
+    
+    auto index = 0;
+    for (auto iter = weights.begin(); iter != weights.end(); iter++)
+    {
+        auto record = *iter;
+        ptr = buffers::text;
+        ptr += sprintf(ptr, "%5d ", index);
+        for (auto w = record.begin(); w != record.end(); w++)
+        {
+            ptr += sprintf(ptr, "(%d,%f,%p) ", w->index, w->weight, w->skeleton);
+        }
+        auto vertex = mesh->GetControlPointAt(index);
+        ptr += sprintf(ptr, "%f %f %f", vertex.mData[0], vertex.mData[1], vertex.mData[2]);
+        fs.write(buffers::text, ptr - buffers::text);
+        fs.put('\n');
+        ++index;
+    }
+    
+    fs.close();
+}
+    
+std::string touch(FileOptions &fo, FbxNodeAttribute *data, std::string extension)
+{
+    auto workspace = createWorkspace(fo);
+    std::string name = data->GetName();
+    if (name.empty())
+    {
+        name = data->GetNode()->GetName();
+    }
+    
+    return workspace + "/" + name + "." + extension;
+}
+    
+std::string createWorkspace(FileOptions &fo)
 {
     auto pos = fo.filename.rfind('.');
     std::string workspace = fo.filename.substr(0, pos) + ".fbm";
     mkdir(workspace.c_str(), 0777);
-    
-    std::string name = mesh->GetName();
-    if (name.empty())
-    {
-        name = mesh->GetNode()->GetName();
-    }
-    
+    return workspace;
+}
+
+void exportMesh(FbxMesh *mesh, FileOptions &fo)
+{
     auto unit = mesh->GetScene()->GetGlobalSettings().GetSystemUnit();
-    
-    std::string filename = workspace + "/" + name + ".mesh";
+    std::string filename = touch(fo, mesh, "mesh");
     MeshStream fs(filename.c_str());
     fs.write('M');
     fs.write('E');
@@ -307,11 +430,6 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
         fs.write<char>('u');
         encode<FbxVector2>(uvs, fs);
     }
-}
-
-namespace buffers
-{
-    char text[1024];
 }
     
 std::string getMappingName(fbxsdk::FbxLayerElement::EMappingMode mode)
@@ -443,9 +561,6 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
             fo.print(debug, [&]{
                 printf(" vertices=%d polygons=%d polygon_vertices=%d triangles=%d", mesh->GetControlPointsCount(), polygonCount, mesh->GetPolygonVertexCount(), triangleCount);
             });
-            
-            if (fo.mesh) { exportMesh(mesh, fo); }
-            if (fo.obj) {exportOBJ(mesh, fo);}
         }
         fo.print(debug, [&]{printf("\n");});
         if (isMesh)
@@ -458,11 +573,40 @@ MeshStatistics dumpNodeHierarchy(FbxNode* node, FileOptions &fo, std::string ind
     
     return stat;
 }
-
-bool process(FileOptions &fo, FbxManager *pManager, MeshStatistics &statistics)
+    
+void process(FileOptions &fo, FbxMesh *mesh)
 {
-    auto importer = FbxImporter::Create(pManager, "");
-    if (!importer->Initialize(fo.filename.c_str(), -1, pManager->GetIOSettings()))
+    if (fo.mesh) { exportMesh(mesh, fo); }
+    if (fo.skin) { exportSkin(mesh, fo); }
+    if (fo.obj) { exportOBJ(mesh, fo); }
+}
+
+void process(FileOptions &fo, FbxScene *scene)
+{
+    for (auto i = 0; i < scene->GetSrcObjectCount(); i++)
+    {
+        auto obj = scene->GetSrcObject(i);
+        if (obj->Is<FbxNode>())
+        {
+            auto node = static_cast<FbxNode *>(obj);
+            auto attribute = node->GetNodeAttribute();
+            if (!attribute) {continue;}
+            switch (attribute->GetAttributeType())
+            {
+                case FbxNodeAttribute::eMesh:
+                    process(fo, static_cast<FbxMesh *>(attribute));
+                    break;
+                    
+                default:break;
+            }
+        }
+    }
+}
+
+bool process(FileOptions &fo, FbxManager *manager, MeshStatistics &statistics)
+{
+    auto importer = FbxImporter::Create(manager, "");
+    if (!importer->Initialize(fo.filename.c_str(), -1, manager->GetIOSettings()))
     {
         fo.print(error, [&]{
             printf("Call to FbxImporter::Intialize() failed.\n");
@@ -471,9 +615,9 @@ bool process(FileOptions &fo, FbxManager *pManager, MeshStatistics &statistics)
         return false;
     }
     
-    auto pScene = FbxScene::Create(pManager, "Scene");
+    auto scene = FbxScene::Create(manager, "Scene");
     
-    if (!importer->Import(pScene))
+    if (!importer->Import(scene))
     {
         fo.print(error, [&]{
             printf("%s\n", importer->GetStatus().GetErrorString());
@@ -483,16 +627,16 @@ bool process(FileOptions &fo, FbxManager *pManager, MeshStatistics &statistics)
     
     importer->Destroy();
     
-    auto numStacks = pScene->GetSrcObjectCount<FbxAnimStack>();
+    auto numStacks = scene->GetSrcObjectCount<FbxAnimStack>();
     for (auto i = 0; i < numStacks; i++)
     {
-        auto pAnimStack = pScene->GetSrcObject<FbxAnimStack>(i);
+        auto pAnimStack = scene->GetSrcObject<FbxAnimStack>(i);
         fo.print(debug, [&]{
             printf("[Animation][%d/%d] %s\n", i + 1, numStacks, pAnimStack->GetName());
         });
     }
     auto unit = FbxSystemUnit::cm;
-    auto stat = dumpNodeHierarchy(pScene->GetRootNode(), fo);
+    auto stat = dumpNodeHierarchy(scene->GetRootNode(), fo);
     fo.print(debug, [&]{
         printf("# vertices=%d polygons=%d triangles=%d\n", stat.vertices, stat.polygons, stat.triangles);
     });
@@ -502,8 +646,8 @@ bool process(FileOptions &fo, FbxManager *pManager, MeshStatistics &statistics)
     });
     
     statistics += stat;
-    
-    pScene->Destroy();
+    process(fo, scene);
+    scene->Destroy();
     
     return true;
 }
