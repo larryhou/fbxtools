@@ -309,7 +309,7 @@ void exportSkin(FbxMesh *mesh, FileOptions &fo)
         ptr += sprintf(ptr, "%5d ", index);
         for (auto w = record.begin(); w != record.end(); w++)
         {
-            ptr += sprintf(ptr, "(%d,%f,%p) ", w->index, w->weight, w->skeleton);
+            ptr += sprintf(ptr, "(%f,%p) ", w->weight, w->skeleton);
         }
         auto vertex = mesh->GetControlPointAt(index);
         ptr += sprintf(ptr, "%f %f %f", vertex.mData[0], vertex.mData[1], vertex.mData[2]);
