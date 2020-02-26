@@ -227,21 +227,40 @@ struct VertexWeight
     VertexWeight(): VertexWeight(-1, 0, NULL) {}
 };
     
-void encode(std::fstream &fs, FbxAMatrix &matrix, std::string indent)
+FbxVector4 &fill(FbxVector4 &vector, double component)
 {
+    auto ptr = vector.mData;
+    *ptr++ = component;
+    *ptr++ = component;
+    *ptr++ = component;
+    *ptr++ = component;
+    return vector;
+}
+    
+void encode(std::fstream &fs, FbxAMatrix matrix, FbxSystemUnit &unit, std::string indent)
+{
+    
     char *ptr = buffers::text;
-    ptr += sprintf(ptr, "%s:", indent.c_str());
-    auto v = matrix.GetT();
-    ptr += sprintf(ptr, " T(%f %f %f)", v.mData[0], v.mData[1], v.mData[2]);
-    v = matrix.GetR();
-    ptr += sprintf(ptr, " R(%f %f %f)", v.mData[0], v.mData[1], v.mData[2]);
-    v = matrix.GetS();
-    ptr += sprintf(ptr, " S(%f %f %f)\n", v.mData[0], v.mData[1], v.mData[2]);
+    ptr += sprintf(ptr, "%s: ", indent.c_str());
+    matrix.SetTRS(matrix.GetT() * (unit.GetScaleFactor() / 100), matrix.GetR(), matrix.GetS());
+    
+    auto &layout = matrix.Double44();
+    for (auto i = 0; i < 4; i++)
+    {
+        for (auto j = 0; j < 4; j++)
+        {
+            ptr += sprintf(ptr, "%d%d:%f ", i, j, layout[j][i]);
+        }
+    }
+    
     fs.write(buffers::text, ptr - buffers::text);
+    fs.put('\n');
 }
     
 void exportSkin(FbxMesh *mesh, FileOptions &fo)
 {
+    auto scene = mesh->GetNode()->GetScene();
+    auto unit = scene->GetGlobalSettings().GetSystemUnit();
     std::map<FbxSkeleton*, FbxCluster *> bones;
     std::vector<std::vector<VertexWeight>> weights(mesh->GetControlPointsCount());
     for (auto s = 0; s < mesh->GetDeformerCount(FbxDeformer::eSkin); s++)
@@ -293,25 +312,26 @@ void exportSkin(FbxMesh *mesh, FileOptions &fo)
         fs.put('\n');
         
         FbxAMatrix matrix;
-        encode(fs, cluster->GetTransformMatrix(matrix), "  self");
-        encode(fs, cluster->GetTransformLinkMatrix(matrix), "  link");
+        encode(fs, cluster->GetTransformLinkMatrix(matrix), unit, "  node");
+        encode(fs, matrix.Inverse(), unit, "  pose");
         if (cluster->GetAssociateModel() != NULL)
         {
-            encode(fs, cluster->GetTransformAssociateModelMatrix(matrix), "  model");
+            encode(fs, cluster->GetTransformAssociateModelMatrix(matrix), unit, "  model");
         }
     }
     
     auto index = 0;
     for (auto iter = weights.begin(); iter != weights.end(); iter++)
     {
-        auto record = *iter;
+        auto &record = *iter;
+        std::sort(record.begin(), record.end(), [](VertexWeight a, VertexWeight b){return a.weight > b.weight;});
         ptr = buffers::text;
         ptr += sprintf(ptr, "%5d ", index);
         for (auto w = record.begin(); w != record.end(); w++)
         {
             ptr += sprintf(ptr, "(%f,%p) ", w->weight, w->skeleton);
         }
-        auto vertex = mesh->GetControlPointAt(index);
+        auto vertex = mesh->GetControlPointAt(index) * (unit.GetScaleFactor() / 100);
         ptr += sprintf(ptr, "%f %f %f", vertex.mData[0], vertex.mData[1], vertex.mData[2]);
         fs.write(buffers::text, ptr - buffers::text);
         fs.put('\n');
