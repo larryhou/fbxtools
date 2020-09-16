@@ -126,7 +126,6 @@ void load_mesh_database(const char* filename, FbxManager *manager)
     {
         fs.read<std::string>();
         generate_meshfbx(fs, manager);
-        break;
     }
 }
 
