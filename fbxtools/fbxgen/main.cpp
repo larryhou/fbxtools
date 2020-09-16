@@ -11,8 +11,11 @@
 #include <serialize.h>
 #include <vector>
 
-void generate_meshfbx(FileStream &fs, FbxManager *manager)
+void generate_meshfbx(FileStream &fs)
 {
+    FbxManager* manager = FbxManager::Create();
+    manager->SetIOSettings(FbxIOSettings::Create(manager, IOSROOT));
+    
     auto name = fs.read<std::string>();
     
     float aabb[6];
@@ -64,7 +67,7 @@ void generate_meshfbx(FileStream &fs, FbxManager *manager)
     
     // vertices
     mesh->InitControlPoints(static_cast<int>(vertices.size()));
-    for (auto i = 0; i < vertices.size(); i++) { mesh->SetControlPointAt(vertices[i], normals[i], i); }
+    for (auto i = 0; i < vertices.size(); i++) { mesh->SetControlPointAt(vertices[i], i); }
     for (auto iter = triangles.begin(); iter != triangles.end();)
     {
         mesh->BeginPolygon();
@@ -74,8 +77,19 @@ void generate_meshfbx(FileStream &fs, FbxManager *manager)
         mesh->EndPolygon();
     }
     
+    { // normals
+        auto element = FbxLayerElementNormal::Create(mesh, "Normals");
+        element->SetMappingMode(fbxsdk::FbxLayerElement::EMappingMode::eByControlPoint);
+        element->SetReferenceMode(fbxsdk::FbxLayerElement::EReferenceMode::eDirect);
+        for (auto iter = normals.begin(); iter != normals.end(); iter++)
+        {
+            element->GetDirectArray().Add(*iter);
+        }
+        layer->SetNormals(element);
+    }
+    
     { // uvs
-        auto element = FbxLayerElementUV::Create(mesh, "uv");
+        auto element = FbxLayerElementUV::Create(mesh, "UVs");
         element->SetMappingMode(fbxsdk::FbxLayerElement::EMappingMode::eByControlPoint);
         element->SetReferenceMode(fbxsdk::FbxLayerElement::EReferenceMode::eDirect);
         for (auto iter = uvs.begin(); iter != uvs.end(); iter++)
@@ -86,7 +100,7 @@ void generate_meshfbx(FileStream &fs, FbxManager *manager)
     }
     
     { // tangents
-        auto element = FbxLayerElementTangent::Create(mesh, "tangents");
+        auto element = FbxLayerElementTangent::Create(mesh, "Tangents");
         element->SetMappingMode(fbxsdk::FbxLayerElement::EMappingMode::eByControlPoint);
         element->SetReferenceMode(fbxsdk::FbxLayerElement::EReferenceMode::eDirect);
         for (auto iter = tangents.begin(); iter != tangents.end(); iter++)
@@ -102,17 +116,20 @@ void generate_meshfbx(FileStream &fs, FbxManager *manager)
     if (!exporter->Initialize(savename.c_str(), -1, manager->GetIOSettings()))
     {
         error = exporter->GetStatus().GetErrorString();
+        manager->Destroy();
         return;
     }
     if (!exporter->Export(scene))
     {
         error = exporter->GetStatus().GetErrorString();
+        manager->Destroy();
         return;
     }
     printf(">> %s\n", savename.c_str());
+    manager->Destroy();
 }
 
-void load_mesh_database(const char* filename, FbxManager *manager)
+void load_mesh_database(const char* filename)
 {
     FileStream fs(filename, std::ios_base::in);
     if (!fs.good()) {return;}
@@ -125,21 +142,16 @@ void load_mesh_database(const char* filename, FbxManager *manager)
     for (auto i = 0; i < count; i++)
     {
         fs.read<std::string>();
-        generate_meshfbx(fs, manager);
+        generate_meshfbx(fs);
     }
 }
 
 int main(int argc, const char * argv[])
 {
-    FbxManager* manager = FbxManager::Create();
-    manager->SetIOSettings(FbxIOSettings::Create(manager, IOSROOT));
-    
     for (auto i = 1; i < argc; i++)
     {
         printf("[%d] %s\n", i, argv[i]);
-        load_mesh_database(argv[i], manager);
+        load_mesh_database(argv[i]);
     }
-    
-    manager->Destroy();
     return 0;
 }
