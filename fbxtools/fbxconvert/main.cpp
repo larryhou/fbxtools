@@ -11,7 +11,7 @@
 #include <fbxsdk/fileio/fbxiosettings.h>
 #include <fbxsdk/core/fbxdatatypes.h>
 
-#include "../common/arguments.h"
+#include <arguments.h>
 
 struct FileOptions: public ArgumentOptions
 {

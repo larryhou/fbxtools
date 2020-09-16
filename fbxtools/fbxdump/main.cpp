@@ -18,8 +18,8 @@
 #include <map>
 #include <assert.h>
 
-#include "../common/arguments.h"
-#include "../common/serialize.h"
+#include <arguments.h>
+#include <serialize.h>
 
 class FileOptions;
 std::string createWorkspace(FileOptions &fo);
@@ -76,13 +76,13 @@ struct FileOptions: public ArgumentOptions
 };
 
 template<typename T>
-void encode(FbxLayerElementTemplate<T> *element, MeshStream &fs)
+void encode(FbxLayerElementTemplate<T> *element, FileStream &fs)
 {
     FbxLayerElementArrayTemplate<T> &data = element->GetDirectArray();
     fs.write<char>('d');
     fs.write<char>(element->GetMappingMode());
     fs.write<int>(data.GetCount());
-    fs.algin();
+    fs.alginp();
     for (auto i = 0; i < data.GetCount(); i++)
     {
         fs.write<T>(data.GetAt(i));
@@ -95,7 +95,7 @@ void encode(FbxLayerElementTemplate<T> *element, MeshStream &fs)
         FbxLayerElementArrayTemplate<int> &indice = element->GetIndexArray();
         fs.write('i');
         fs.write<int>(indice.GetCount());
-        fs.algin();
+        fs.alginp();
         for (auto i = 0; i < indice.GetCount(); i++)
         {
             fs.write<int>(indice.GetAt(i));
@@ -110,7 +110,7 @@ void exportOBJ(FbxMesh *mesh, FileOptions &fo)
     auto unit = mesh->GetScene()->GetGlobalSettings().GetSystemUnit();
     
     std::string filename = touch(fo, mesh, "obj");
-    MeshStream fs(filename.c_str());
+    FileStream fs(filename.c_str());
     
     char line[1024];
     for (auto i = 0; i < mesh->GetControlPointsCount(); i++)
@@ -365,7 +365,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
 {
     auto unit = mesh->GetScene()->GetGlobalSettings().GetSystemUnit();
     std::string filename = touch(fo, mesh, "mesh");
-    MeshStream fs(filename.c_str());
+    FileStream fs(filename.c_str());
     fs.write('M');
     fs.write('E');
     fs.write('S');
@@ -374,7 +374,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     fs.write('V');
     auto numControlVertices = mesh->GetControlPointsCount();
     fs.write<int>(numControlVertices);
-    fs.algin();
+    fs.alginp();
     for (auto i = 0; i < numControlVertices; i++)
     {
         fs.write<FbxVector4>(mesh->GetControlPointAt(i) * (unit.GetScaleFactor() / 100));
@@ -382,11 +382,11 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     
     // triangles
     fs.write('T');
-    auto offset = fs.tell();
+    auto offset = fs.tellg();
     fs.write<int>(0); // triangle count
     auto numTriangles = 0;
     std::vector<int> polygonVertices;
-    fs.algin();
+    fs.alginp();
     for (auto i = 0; i < mesh->GetPolygonCount(); i++)
     {
         auto size = mesh->GetPolygonSize(i);
@@ -406,7 +406,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     }
     
     // write real triangle count
-    auto position = fs.tell();
+    auto position = fs.tellg();
     fs.seek(offset, std::fstream::beg);
     fs.write<int>(numTriangles);
     fs.seek(position, std::fstream::beg); // restore cursor
@@ -414,7 +414,7 @@ void exportMesh(FbxMesh *mesh, FileOptions &fo)
     // encode polygon vertices
     fs.write<char>('P');
     fs.write<int>((int)polygonVertices.size());
-    fs.algin();
+    fs.alginp();
     fs.write<int>(&polygonVertices.front(), (int)polygonVertices.size());
     fs.write<char>('Z');
     
