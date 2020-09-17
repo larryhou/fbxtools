@@ -10,6 +10,13 @@
 #include <fstream>
 #include <serialize.h>
 #include <vector>
+#include <map>
+
+struct BoneInfluence
+{
+    uint16_t indices[4];
+    float weights[4];
+};
 
 void generate_meshfbx(FileStream &fs)
 {
@@ -20,8 +27,8 @@ void generate_meshfbx(FileStream &fs)
     
     float aabb[6];
     fs.read(&aabb[0], 6);
-    std::vector<FbxMatrix> poese = fs.read_vector<FbxMatrix>();
-    std::vector<uint64_t> weights = fs.read_vector<uint64_t>();
+    auto poses = fs.read_vector<FbxAMatrix>();
+    auto influences = fs.read_vector<BoneInfluence>();
     
     auto vertices = fs.read_vector<FbxVector3>();
     auto triangles = fs.read_vector<uint32_t>();
@@ -43,12 +50,66 @@ void generate_meshfbx(FileStream &fs)
         FbxSystemUnit::m.ConvertScene(scene, options);
     }
     
-    auto node = FbxNode::Create(manager, name.c_str());
+    auto node = FbxNode::Create(scene, name.c_str());
     scene->GetRootNode()->AddChild(node);
     scene->ConnectSrcObject(node);
     
-    auto mesh = FbxMesh::Create(manager, name.c_str());
+    auto mesh = FbxMesh::Create(scene, name.c_str());
     node->SetNodeAttribute(mesh);
+    
+    std::vector<std::map<uint16_t, float>> bones;
+    bones.resize(poses.size());
+    
+    auto pindex = 0;
+    for (auto iter = influences.begin(); iter != influences.end(); iter++)
+    {
+        for (auto i = 0; i < 4; i++)
+        {
+            auto index = iter->indices[i];
+            auto &weights = bones[index];
+            weights[pindex] = iter->weights[i];
+        }
+        pindex++;
+    }
+    auto root = FbxNode::Create(scene, "Skeleton");
+    {
+        auto skeleton = FbxSkeleton::Create(scene, "");
+        skeleton->SetSkeletonType(FbxSkeleton::eRoot);
+        root->SetNodeAttribute(skeleton);
+        scene->GetRootNode()->AddChild(root);
+    }
+    
+    auto skin = FbxSkin::Create(scene, "Skin");
+    for (auto i = 0; i < bones.size(); i++)
+    {
+        auto m = poses[i].Inverse();
+        
+        auto &weights = bones[i];
+        auto bone = FbxNode::Create(scene, "");
+        auto skeleton = FbxSkeleton::Create(scene, "");
+        skeleton->SetSkeletonType(FbxSkeleton::eLimb);
+        bone->SetNodeAttribute(skeleton);
+        bone->LclTranslation.Set(m.GetT());
+        bone->LclRotation.Set(m.GetR());
+        bone->LclScaling.Set(m.GetS());
+        root->AddChild(bone);
+        
+        auto cluster = FbxCluster::Create(scene, "");
+        cluster->SetLink(bone);
+        cluster->SetLinkMode(FbxCluster::eNormalize);
+        cluster->SetTransformLinkMatrix(bone->EvaluateGlobalTransform());
+        cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
+        
+        cluster->SetControlPointIWCount(static_cast<int>(weights.size()));
+        for (auto iter = weights.begin(); iter != weights.end(); iter++)
+        {
+            cluster->AddControlPointIndex(iter->first, iter->second);
+        }
+        
+        skin->AddCluster(cluster);
+    }
+    
+    mesh->AddDeformer(skin);
     
     auto layer = mesh->GetLayer(0);
     if (!layer)
@@ -79,8 +140,8 @@ void generate_meshfbx(FileStream &fs)
     
     { // normals
         auto element = FbxLayerElementNormal::Create(mesh, "Normals");
-        element->SetMappingMode(fbxsdk::FbxLayerElement::EMappingMode::eByControlPoint);
-        element->SetReferenceMode(fbxsdk::FbxLayerElement::EReferenceMode::eDirect);
+        element->SetMappingMode(FbxLayerElement::eByControlPoint);
+        element->SetReferenceMode(FbxLayerElement::eDirect);
         for (auto iter = normals.begin(); iter != normals.end(); iter++)
         {
             element->GetDirectArray().Add(*iter);
@@ -90,8 +151,8 @@ void generate_meshfbx(FileStream &fs)
     
     { // uvs
         auto element = FbxLayerElementUV::Create(mesh, "UVs");
-        element->SetMappingMode(fbxsdk::FbxLayerElement::EMappingMode::eByControlPoint);
-        element->SetReferenceMode(fbxsdk::FbxLayerElement::EReferenceMode::eDirect);
+        element->SetMappingMode(FbxLayerElement::eByControlPoint);
+        element->SetReferenceMode(FbxLayerElement::eDirect);
         for (auto iter = uvs.begin(); iter != uvs.end(); iter++)
         {
             element->GetDirectArray().Add(*iter);
@@ -101,8 +162,8 @@ void generate_meshfbx(FileStream &fs)
     
     { // tangents
         auto element = FbxLayerElementTangent::Create(mesh, "Tangents");
-        element->SetMappingMode(fbxsdk::FbxLayerElement::EMappingMode::eByControlPoint);
-        element->SetReferenceMode(fbxsdk::FbxLayerElement::EReferenceMode::eDirect);
+        element->SetMappingMode(FbxLayerElement::eByControlPoint);
+        element->SetReferenceMode(FbxLayerElement::eDirect);
         for (auto iter = tangents.begin(); iter != tangents.end(); iter++)
         {
             element->GetDirectArray().Add(*iter);

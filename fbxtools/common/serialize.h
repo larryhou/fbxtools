@@ -127,6 +127,26 @@ std::string FileStream::read()
 }
 
 template<>
+void FileStream::write(const FbxDouble4 v)
+{
+    write<float>(static_cast<float>(v.mData[0]));
+    write<float>(static_cast<float>(v.mData[1]));
+    write<float>(static_cast<float>(v.mData[2]));
+    write<float>(static_cast<float>(v.mData[3]));
+}
+
+template<>
+FbxDouble4 FileStream::read()
+{
+    FbxDouble4 v;
+    v.mData[0] = read<float>();
+    v.mData[1] = read<float>();
+    v.mData[2] = read<float>();
+    v.mData[3] = read<float>();
+    return v;
+}
+
+template<>
 void FileStream::write(const FbxVector4 v)
 {
     write<float>(static_cast<float>(v.mData[0]));
@@ -143,6 +163,24 @@ FbxVector4 FileStream::read()
     v.mData[1] = read<float>();
     v.mData[2] = read<float>();
     v.mData[3] = read<float>();
+    return v;
+}
+
+template<>
+void FileStream::write(const FbxDouble3 v)
+{
+    write<float>(static_cast<float>(v.mData[0]));
+    write<float>(static_cast<float>(v.mData[1]));
+    write<float>(static_cast<float>(v.mData[2]));
+}
+
+template<>
+FbxDouble3 FileStream::read()
+{
+    FbxDouble3 v;
+    v.mData[0] = read<float>();
+    v.mData[1] = read<float>();
+    v.mData[2] = read<float>();
     return v;
 }
 
@@ -165,6 +203,22 @@ FbxVector3 FileStream::read()
 }
 
 template<>
+void FileStream::write(const FbxDouble2 v)
+{
+    write<float>(static_cast<float>(v.mData[0]));
+    write<float>(static_cast<float>(v.mData[1]));
+}
+
+template<>
+FbxDouble2 FileStream::read()
+{
+    FbxDouble2 v;
+    v.mData[0] = read<float>();
+    v.mData[1] = read<float>();
+    return v;
+}
+
+template<>
 void FileStream::write(const FbxVector2 v)
 {
     write<float>(static_cast<float>(v.mData[0]));
@@ -181,23 +235,56 @@ FbxVector2 FileStream::read()
 }
 
 template<>
-void FileStream::write(const FbxMatrix v)
+void FileStream::write(const FbxMatrix m)
 {
-    write(v.GetRow(0));
-    write(v.GetRow(1));
-    write(v.GetRow(2));
-    write(v.GetRow(3));
+    auto ptr = (FbxDouble *)&m;
+    for (auto i = 0; i < 16; i++) { write(static_cast<float>(*ptr++)); }
 }
 
 template<>
 FbxMatrix FileStream::read()
 {
-    FbxMatrix v;
-    v.SetRow(0, read<FbxVector4>());
-    v.SetRow(1, read<FbxVector4>());
-    v.SetRow(2, read<FbxVector4>());
-    v.SetRow(3, read<FbxVector4>());
-    return v;
+    FbxMatrix m;
+    auto ptr = (FbxDouble *)&m;
+    for (auto i = 0; i < 16; i++) { *ptr++ = read<float>(); }
+    return m;
+}
+
+template<>
+void FileStream::write(const FbxAMatrix m)
+{
+    auto ptr = (FbxDouble *)&m;
+    for (auto i = 0; i < 16; i++)
+    {
+        if (i == 1 || i == 2 || i == 4 || i == 8 || i == 12)
+        {
+            write(static_cast<float>(-*ptr++));
+        }
+        else
+        {
+            write(static_cast<float>(*ptr++));
+        }
+    }
+}
+
+template<>
+FbxAMatrix FileStream::read()
+{
+    FbxAMatrix m;
+    auto ptr = (FbxDouble *)&m;
+    for (auto i = 0; i < 16; i++)
+    {
+        if (i == 1 || i == 2 || i == 4 || i == 8 || i == 12)
+        {
+            *ptr++ = -read<float>();
+        }
+        else
+        {
+            *ptr++ = read<float>();
+        }
+    }
+    
+    return m;
 }
 
 template<>
