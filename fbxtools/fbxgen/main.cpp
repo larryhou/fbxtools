@@ -91,8 +91,8 @@ void generate_meshfbx(FileStream &fs)
         auto parent = pindex == -1? scene->GetRootNode() : bones[pindex];
         parent->AddChild(node);
         auto &transform = skeleton.poses[i];
-        node->LclTranslation.Set(transform.position);
         node->LclRotation.Set(transform.rotation);
+        node->LclTranslation.Set(transform.position);
         node->LclScaling.Set(transform.scale);
     }
     
@@ -106,8 +106,6 @@ void generate_meshfbx(FileStream &fs)
         auto cluster = FbxCluster::Create(scene, name.c_str());
         cluster->SetLink(bone);
         cluster->SetLinkMode(FbxCluster::eNormalize);
-        cluster->SetTransformLinkMatrix(bone->EvaluateGlobalTransform());
-        cluster->SetTransformMatrix(bone->GetParent()->EvaluateGlobalTransform());
 
         auto &cluster_weights = weights[i];
         cluster->SetControlPointIWCount(static_cast<int>(cluster_weights.size()));
@@ -119,7 +117,7 @@ void generate_meshfbx(FileStream &fs)
         skin->AddCluster(cluster);
     }
     
-//    mesh->AddDeformer(skin);x
+//    mesh->AddDeformer(skin);
     
     auto layer = mesh->GetLayer(0);
     if (!layer)
