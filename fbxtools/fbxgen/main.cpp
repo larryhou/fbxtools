@@ -36,6 +36,7 @@ void generate_meshfbx(FileStream &fs)
     auto tangents = fs.read_vector<FbxVector4>();
     auto normals = fs.read_vector<FbxVector3>();
     auto uvs = fs.read_vector<FbxVector2>();
+    auto skeleton = fs.read<Skeleton>();
     
     auto scene = FbxScene::Create(manager, "Scene");
     {
@@ -50,66 +51,75 @@ void generate_meshfbx(FileStream &fs)
         FbxSystemUnit::m.ConvertScene(scene, options);
     }
     
-    auto node = FbxNode::Create(scene, name.c_str());
-    scene->GetRootNode()->AddChild(node);
-    scene->ConnectSrcObject(node);
+    auto meshNode = FbxNode::Create(scene, name.c_str());
+    scene->GetRootNode()->AddChild(meshNode);
+    scene->ConnectSrcObject(meshNode);
     
     auto mesh = FbxMesh::Create(scene, name.c_str());
-    node->SetNodeAttribute(mesh);
+    meshNode->SetNodeAttribute(mesh);
     
-    std::vector<std::map<uint16_t, float>> bones;
-    bones.resize(poses.size());
+    std::vector<std::map<uint16_t, float>> weights;
+    weights.resize(poses.size());
     
-    auto pindex = 0;
+    auto vertex = 0;
     for (auto iter = influences.begin(); iter != influences.end(); iter++)
     {
         for (auto i = 0; i < 4; i++)
         {
             auto index = iter->indices[i];
-            auto &weights = bones[index];
-            weights[pindex] = iter->weights[i];
+            auto &cluster = weights[index];
+            cluster[vertex] = iter->weights[i];
         }
-        pindex++;
+        vertex++;
     }
-    auto root = FbxNode::Create(scene, "Skeleton");
+    
+    std::vector<FbxNode*> bones;
+    for (auto i = 0; i < skeleton.poses.size(); i++)
     {
-        auto skeleton = FbxSkeleton::Create(scene, "");
-        skeleton->SetSkeletonType(FbxSkeleton::eRoot);
-        root->SetNodeAttribute(skeleton);
-        scene->GetRootNode()->AddChild(root);
+        auto &name = skeleton.names[i];
+        auto node = FbxNode::Create(scene, name.c_str());
+        auto bone = FbxSkeleton::Create(scene, name.c_str());
+        bone->SetSkeletonType( skeleton.nodes[i] == -1? FbxSkeleton::eRoot : FbxSkeleton::eLimb);
+        node->SetNodeAttribute(bone);
+        bones.push_back(node);
+    }
+    
+    for (auto i = 0; i < bones.size(); i++)
+    {
+        auto node = bones[i];
+        auto pindex = skeleton.nodes[i];
+        auto parent = pindex == -1? scene->GetRootNode() : bones[pindex];
+        parent->AddChild(node);
+        auto &transform = skeleton.poses[i];
+        node->LclTranslation.Set(transform.position);
+        node->LclRotation.Set(transform.rotation);
+        node->LclScaling.Set(transform.scale);
     }
     
     auto skin = FbxSkin::Create(scene, "Skin");
-    for (auto i = 0; i < bones.size(); i++)
+    for (auto i = 0; i < skeleton.bones.size(); i++)
     {
-        auto m = poses[i].Inverse();
+        auto index = skeleton.bones[i];
+        auto &name = skeleton.names[index];
+        auto &bone = bones[index];
         
-        auto &weights = bones[i];
-        auto bone = FbxNode::Create(scene, "");
-        auto skeleton = FbxSkeleton::Create(scene, "");
-        skeleton->SetSkeletonType(FbxSkeleton::eLimb);
-        bone->SetNodeAttribute(skeleton);
-        bone->LclTranslation.Set(m.GetT());
-        bone->LclRotation.Set(m.GetR());
-        bone->LclScaling.Set(m.GetS());
-        root->AddChild(bone);
-        
-        auto cluster = FbxCluster::Create(scene, "");
+        auto cluster = FbxCluster::Create(scene, name.c_str());
         cluster->SetLink(bone);
         cluster->SetLinkMode(FbxCluster::eNormalize);
         cluster->SetTransformLinkMatrix(bone->EvaluateGlobalTransform());
-        cluster->SetTransformMatrix(node->EvaluateGlobalTransform());
-        
-        cluster->SetControlPointIWCount(static_cast<int>(weights.size()));
-        for (auto iter = weights.begin(); iter != weights.end(); iter++)
+        cluster->SetTransformMatrix(bone->GetParent()->EvaluateGlobalTransform());
+
+        auto &cluster_weights = weights[i];
+        cluster->SetControlPointIWCount(static_cast<int>(cluster_weights.size()));
+        for (auto iter = cluster_weights.begin(); iter != cluster_weights.end(); iter++)
         {
             cluster->AddControlPointIndex(iter->first, iter->second);
         }
-        
+
         skin->AddCluster(cluster);
     }
     
-    mesh->AddDeformer(skin);
+//    mesh->AddDeformer(skin);x
     
     auto layer = mesh->GetLayer(0);
     if (!layer)
@@ -124,7 +134,7 @@ void generate_meshfbx(FileStream &fs)
     material->Ambient.Set(FbxDouble3(1, 1, 1));
     material->Diffuse.Set(FbxDouble3(1, 1, 1));
     material->TransparencyFactor.Set(0);
-    node->AddMaterial(material);
+    meshNode->AddMaterial(material);
     
     // vertices
     mesh->InitControlPoints(static_cast<int>(vertices.size()));
