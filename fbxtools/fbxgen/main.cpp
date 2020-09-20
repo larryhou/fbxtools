@@ -91,7 +91,7 @@ void generate_meshfbx(FileStream &fs)
     auto mesh = FbxMesh::Create(scene, name.c_str());
     meshNode->SetNodeAttribute(mesh);
     
-    if (skeleton.bones.size())
+    if (skeleton.nodes.size())
     {
         std::vector<std::map<uint16_t, float>> weights;
         weights.resize(poses.size());
