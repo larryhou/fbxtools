@@ -29,7 +29,7 @@ struct FBXSDK_DLL FbxVector3 : public FbxDouble3
 struct Transform
 {
     FbxVector3 position;
-    FbxVector4 rotation;
+    FbxQuaternion rotation;
     FbxVector3 scale;
 };
 
@@ -187,6 +187,24 @@ void FileStream::write(const FbxVector4 &v)
 
 template<>
 void FileStream::read(FbxVector4 &v)
+{
+    v.mData[0] = read<float>();
+    v.mData[1] = read<float>();
+    v.mData[2] = read<float>();
+    v.mData[3] = read<float>();
+}
+
+template<>
+void FileStream::write(const FbxQuaternion &v)
+{
+    write<float>(static_cast<float>(v.mData[0]));
+    write<float>(static_cast<float>(v.mData[1]));
+    write<float>(static_cast<float>(v.mData[2]));
+    write<float>(static_cast<float>(v.mData[3]));
+}
+
+template<>
+void FileStream::read(FbxQuaternion &v)
 {
     v.mData[0] = read<float>();
     v.mData[1] = read<float>();
