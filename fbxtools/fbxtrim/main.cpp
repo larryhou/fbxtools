@@ -32,14 +32,6 @@ void trim(FbxMesh *mesh)
             mesh->RemoveElementVertexColor(mesh->GetElementVertexColor(0));
         }
     }
-    
-    if ((count = mesh->GetElementUVCount()))
-    {
-        for (auto i = 1; i < count; i++)
-        {
-            mesh->RemoveElementUV(mesh->GetElementUV(1));
-        }
-    }
 }
 
 void trim(FbxScene *scene)
