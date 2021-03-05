@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6B17B40D25F272DF002B2661 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6B17B40C25F272DF002B2661 /* main.cpp */; };
+		6B17B41725F272F5002B2661 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B17B41625F272F5002B2661 /* Foundation.framework */; };
+		6B17B41825F272FF002B2661 /* libiconv.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEFE23FA46BE00E6CBE9 /* libiconv.tbd */; };
+		6B17B41E25F27305002B2661 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FF0023FA474A00E6CBE9 /* libz.tbd */; };
+		6B17B42425F2730C002B2661 /* libxml2.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEFB23FA467500E6CBE9 /* libxml2.tbd */; };
+		6B17B42A25F2732A002B2661 /* libfbxsdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */; };
 		6B28FED823F7DD3D00E6CBE9 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6B28FED723F7DD3D00E6CBE9 /* main.cpp */; };
 		6B28FEE023F7DE0700E6CBE9 /* libfbxsdk.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */; };
 		6B28FEE223F7DE8700E6CBE9 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6B28FEE123F7DE8700E6CBE9 /* CoreFoundation.framework */; };
@@ -34,6 +40,15 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
+		6B17B40825F272DF002B2661 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		6B28FED223F7DD3D00E6CBE9 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -73,6 +88,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6B17B40A25F272DF002B2661 /* fbxmerge */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fbxmerge; sourceTree = BUILT_PRODUCTS_DIR; };
+		6B17B40C25F272DF002B2661 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		6B17B41625F272F5002B2661 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		6B17B43125F27D0F002B2661 /* fbxptr.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = fbxptr.hpp; sourceTree = "<group>"; };
 		6B28FED423F7DD3D00E6CBE9 /* fbxdump */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fbxdump; sourceTree = BUILT_PRODUCTS_DIR; };
 		6B28FED723F7DD3D00E6CBE9 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		6B28FEDF23F7DDD800E6CBE9 /* libfbxsdk.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libfbxsdk.a; sourceTree = "<group>"; };
@@ -94,6 +113,18 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		6B17B40725F272DF002B2661 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B17B42A25F2732A002B2661 /* libfbxsdk.a in Frameworks */,
+				6B17B42425F2730C002B2661 /* libxml2.tbd in Frameworks */,
+				6B17B41E25F27305002B2661 /* libz.tbd in Frameworks */,
+				6B17B41825F272FF002B2661 /* libiconv.tbd in Frameworks */,
+				6B17B41725F272F5002B2661 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6B28FED123F7DD3D00E6CBE9 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -145,6 +176,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6B17B40B25F272DF002B2661 /* fbxconcat */ = {
+			isa = PBXGroup;
+			children = (
+				6B17B40C25F272DF002B2661 /* main.cpp */,
+				6B17B43125F27D0F002B2661 /* fbxptr.hpp */,
+			);
+			path = fbxconcat;
+			sourceTree = "<group>";
+		};
 		6B28FECB23F7DD3D00E6CBE9 = {
 			isa = PBXGroup;
 			children = (
@@ -153,6 +193,7 @@
 				6B28FEEB23F98AB500E6CBE9 /* fbxtrim */,
 				6BC7243823FFB361009C33ED /* fbxconvert */,
 				6B98F5302510F72600675B3B /* fbxgen */,
+				6B17B40B25F272DF002B2661 /* fbxconcat */,
 				6B28FED523F7DD3D00E6CBE9 /* Products */,
 				6B28FEDE23F7DDD800E6CBE9 /* Frameworks */,
 			);
@@ -165,6 +206,7 @@
 				6B28FEEA23F98AB500E6CBE9 /* fbxtrim */,
 				6BC7243723FFB361009C33ED /* fbxconvert */,
 				6B98F52F2510F72600675B3B /* fbxgen */,
+				6B17B40A25F272DF002B2661 /* fbxmerge */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -180,6 +222,7 @@
 		6B28FEDE23F7DDD800E6CBE9 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6B17B41625F272F5002B2661 /* Foundation.framework */,
 				6B28FF0023FA474A00E6CBE9 /* libz.tbd */,
 				6B28FEFE23FA46BE00E6CBE9 /* libiconv.tbd */,
 				6B28FEFB23FA467500E6CBE9 /* libxml2.tbd */,
@@ -228,6 +271,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		6B17B40925F272DF002B2661 /* fbxmerge */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6B17B41025F272DF002B2661 /* Build configuration list for PBXNativeTarget "fbxmerge" */;
+			buildPhases = (
+				6B17B40625F272DF002B2661 /* Sources */,
+				6B17B40725F272DF002B2661 /* Frameworks */,
+				6B17B40825F272DF002B2661 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = fbxmerge;
+			productName = fbxconcat;
+			productReference = 6B17B40A25F272DF002B2661 /* fbxmerge */;
+			productType = "com.apple.product-type.tool";
+		};
 		6B28FED323F7DD3D00E6CBE9 /* fbxdump */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 6B28FEDB23F7DD3D00E6CBE9 /* Build configuration list for PBXNativeTarget "fbxdump" */;
@@ -306,6 +366,9 @@
 				LastUpgradeCheck = 1130;
 				ORGANIZATIONNAME = LARRYHOU;
 				TargetAttributes = {
+					6B17B40925F272DF002B2661 = {
+						CreatedOnToolsVersion = 12.2;
+					};
 					6B28FED323F7DD3D00E6CBE9 = {
 						CreatedOnToolsVersion = 11.3;
 					};
@@ -337,11 +400,20 @@
 				6B28FEE923F98AB500E6CBE9 /* fbxtrim */,
 				6BC7243623FFB361009C33ED /* fbxconvert */,
 				6B98F52E2510F72600675B3B /* fbxgen */,
+				6B17B40925F272DF002B2661 /* fbxmerge */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		6B17B40625F272DF002B2661 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6B17B40D25F272DF002B2661 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		6B28FED023F7DD3D00E6CBE9 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -377,6 +449,38 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
+		6B17B40E25F272DF002B2661 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PRLP6W5S32;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		6B17B40F25F272DF002B2661 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = PRLP6W5S32;
+				ENABLE_HARDENED_RUNTIME = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 10.15;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		6B28FED923F7DD3D00E6CBE9 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -627,6 +731,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		6B17B41025F272DF002B2661 /* Build configuration list for PBXNativeTarget "fbxmerge" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6B17B40E25F272DF002B2661 /* Debug */,
+				6B17B40F25F272DF002B2661 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		6B28FECF23F7DD3D00E6CBE9 /* Build configuration list for PBXProject "fbxtools" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
